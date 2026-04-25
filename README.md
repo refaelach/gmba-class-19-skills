@@ -58,6 +58,11 @@ If a specific skill in this repo relies on tool-specific features (sub-agents, f
 
 ## Available Skills
 
+### Analysis
+- **[swot-analysis](./skills/analysis/swot-analysis)** — Apply SWOT to evaluate an idea, business, or market: fills all four quadrants, derives S+O/S+T/W+O/W+T strategic moves, and saves a linked research note. *Full file output on Claude Code and Codex. In-chat Markdown on other tools.*
+- **[pestel-analysis](./skills/analysis/pestel-analysis)** — Apply PESTEL to analyze the six macro-environmental forces (Political, Economic, Social, Technological, Environmental, Legal) affecting a market or business, with per-dimension ratings and strategic implications. *Full file output on Claude Code and Codex. In-chat Markdown on other tools.*
+- **[porter-5-forces](./skills/analysis/porter-5-forces)** — Apply Porter's 5 Forces to assess competitive intensity and market attractiveness, with force ratings, an overall attractiveness verdict, and strategic implications. *Full file output on Claude Code and Codex. In-chat Markdown on other tools.*
+
 ### Decision-Making
 - **[llm-council](./skills/decision-making/llm-council)** — Run any decision through a council of 5 AI advisors who independently analyze it, peer-review each other anonymously, and synthesize a final verdict. Based on Andrej Karpathy's LLM Council methodology. *Full experience on tools that support sub-agents (Claude Code, Codex). Runs sequentially on others.*
 
