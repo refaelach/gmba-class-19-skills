@@ -1,0 +1,62 @@
+---
+const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
+const repoUrl = 'https://github.com/refaelach/gmba-class-19-skills';
+---
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-block">
+      <div class="footer-title h-display">GMBA Class 19 Skills</div>
+      <div class="footer-tag">Built by classmates, for classmates. Open source under MIT.</div>
+    </div>
+    <div class="footer-links">
+      <a href={repoUrl} target="_blank" rel="noopener">GitHub repo</a>
+      <a href={`${baseUrl}/how-to-use`}>How to use</a>
+      <a href={`${baseUrl}/contribute`}>Contribute</a>
+      <a href={`${repoUrl}/blob/main/CONTRIBUTING.md`} target="_blank" rel="noopener">Contribution rules</a>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    border-top: 1px solid var(--line);
+    background: var(--bg);
+    margin-top: 80px;
+  }
+  .footer-inner {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 32px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+  .footer-title {
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  .footer-tag {
+    font-size: 13px;
+    color: var(--ink-3);
+    line-height: 1.55;
+    max-width: 360px;
+  }
+  .footer-links {
+    display: flex;
+    gap: 22px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .footer-links a {
+    font-size: 13px;
+    color: var(--ink-2);
+    text-decoration: none;
+  }
+  .footer-links a:hover {
+    color: var(--ink);
+    text-decoration: underline;
+  }
+</style>

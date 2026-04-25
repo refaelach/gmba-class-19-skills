@@ -1,0 +1,150 @@
+---
+const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
+const path = Astro.url.pathname.replace(baseUrl, '') || '/';
+
+const links = [
+  { href: '/', label: 'Browse', match: (p: string) => p === '/' || p.startsWith('/skills/') },
+  { href: '/how-to-use', label: 'How to use', match: (p: string) => p.startsWith('/how-to-use') },
+  { href: '/contribute', label: 'Contribute', match: (p: string) => p.startsWith('/contribute') },
+];
+---
+<header class="app-nav">
+  <div class="nav-inner">
+    <a class="brand" href={`${baseUrl}/`}>
+      <span class="brand-mark mono">19</span>
+      <span class="brand-name h-display">GMBA Skills</span>
+      <span class="brand-tag mono">Class 19</span>
+    </a>
+
+    <nav class="nav-links">
+      {links.map((l) => (
+        <a
+          href={`${baseUrl}${l.href}`}
+          class={`nav-link${l.match(path) ? ' active' : ''}`}
+        >
+          {l.label}
+        </a>
+      ))}
+      <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">
+        <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+        </svg>
+        <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<script>
+  // Theme toggle — light / dark with localStorage persistence.
+  const btn = document.getElementById('theme-toggle');
+  if (btn) {
+    btn.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      try { localStorage.setItem('theme', next); } catch (e) { /* ignore */ }
+    });
+  }
+</script>
+
+<style>
+  .app-nav {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+    backdrop-filter: saturate(180%) blur(8px);
+  }
+  .nav-inner {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 14px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--ink);
+  }
+  .brand-mark {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: var(--ink);
+    color: var(--bg);
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .brand-name {
+    font-size: 18px;
+    font-weight: 500;
+  }
+  .brand-tag {
+    font-size: 11px;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+  }
+  .nav-link {
+    color: var(--ink-2);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 6px 0;
+    border-bottom: 2px solid transparent;
+    transition: color 0.12s ease, border-color 0.12s ease;
+  }
+  .nav-link:hover {
+    color: var(--ink);
+  }
+  .nav-link.active {
+    color: var(--ink);
+    border-bottom-color: var(--accent);
+  }
+  .theme-toggle {
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--ink-2);
+    transition: color 0.12s, border-color 0.12s;
+  }
+  .theme-toggle:hover {
+    color: var(--ink);
+    border-color: var(--ink-3);
+  }
+  .icon-sun { display: none; }
+  .icon-moon { display: inline-block; }
+  :global([data-theme="dark"]) .icon-sun { display: inline-block; }
+  :global([data-theme="dark"]) .icon-moon { display: none; }
+
+  @media (max-width: 720px) {
+    .nav-inner { padding: 12px 20px; gap: 14px; }
+    .brand-tag { display: none; }
+    .nav-links { gap: 14px; }
+    .nav-link { font-size: 13px; }
+  }
+</style>

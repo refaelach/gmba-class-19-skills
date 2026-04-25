@@ -1,0 +1,67 @@
+---
+import Layout from '../layouts/Layout.astro';
+const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+<Layout title="How to use a skill · GMBA Class 19">
+  <article class="placeholder-page">
+    <div class="page-tag mono">how to use</div>
+    <h1 class="h-display">Coming soon.</h1>
+    <p>
+      The full how-to-use guide — covering the copy &amp; paste flow, Custom GPTs / Projects /
+      Gems, and native skill folders for Claude Code / Codex / Cursor / Gemini CLI — is the next
+      thing landing on this site.
+    </p>
+    <p>
+      In the meantime, every skill detail page has a <strong>Copy skill</strong> button.
+      Paste the result into a fresh chat with this wrapper line:
+    </p>
+    <pre><code>Use the following as your guide for this conversation,
+then ask me what topic I want to work on.
+
+[paste the skill here]</code></pre>
+    <p>
+      <a class="btn btn-accent" href={baseUrl + '/'}>Browse skills</a>
+    </p>
+  </article>
+</Layout>
+
+<style>
+  .placeholder-page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 80px 32px 0;
+  }
+  .page-tag {
+    font-size: 11px;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-size: clamp(34px, 4.4vw, 48px);
+    margin: 0 0 24px;
+    font-weight: 500;
+    line-height: 1.08;
+  }
+  p {
+    font-size: 17px;
+    line-height: 1.65;
+    color: var(--ink-2);
+    margin: 0 0 18px;
+  }
+  pre {
+    background: var(--code-bg);
+    padding: 18px;
+    border-radius: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--ink);
+    margin: 0 0 22px;
+    overflow-x: auto;
+  }
+  @media (max-width: 720px) {
+    .placeholder-page { padding: 56px 20px 0; }
+  }
+</style>

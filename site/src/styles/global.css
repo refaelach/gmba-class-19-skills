@@ -1,0 +1,205 @@
+/* ---------------------------------------------------------------
+   GMBA Class 19 Skills — global stylesheet
+   Design tokens, base reset, type, and reusable utility classes.
+   --------------------------------------------------------------- */
+
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap');
+
+/* -------- Design tokens -------- */
+:root {
+  /* Light mode — warm off-white + ink black + sharp accent */
+  --bg: #F6F2EA;
+  --bg-elev: #FFFCF6;
+  --bg-sunken: #EFE9DC;
+  --ink: #15130E;
+  --ink-2: #3A362C;
+  --ink-3: #6B6557;
+  --ink-4: #9C9580;
+  --line: #DDD3BD;
+  --line-2: #E8DFC9;
+  --accent: #C2410C;          /* sharp burnt-orange */
+  --accent-tint: #F5DDC9;
+  --code-bg: #EFE9DC;
+}
+
+[data-theme="dark"] {
+  --bg: #14120F;
+  --bg-elev: #1B1915;
+  --bg-sunken: #0E0D0B;
+  --ink: #F2EDE0;
+  --ink-2: #D9D2BF;
+  --ink-3: #A29B86;
+  --ink-4: #6B6557;
+  --line: #2F2B23;
+  --line-2: #28241D;
+  --accent: #F0944C;
+  --accent-tint: #2E2118;
+  --code-bg: #1F1C16;
+}
+
+/* -------- Reset / normalize -------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  background: var(--bg);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, h5, h6, p { margin: 0; padding: 0; }
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-weight: 500;
+  letter-spacing: -0.012em;
+  line-height: 1.1;
+  color: var(--ink);
+}
+
+h1 { font-size: 40px; line-height: 1.05; }
+h2 { font-size: 28px; }
+h3 { font-size: 22px; }
+h4 { font-size: 18px; }
+h5 { font-size: 16px; }
+h6 { font-size: 14px; }
+
+p { line-height: 1.5; }
+
+a { color: inherit; text-decoration: none; }
+a:hover { text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
+
+a.link {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--line);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+a.link:hover { text-decoration-color: var(--accent); color: var(--accent); }
+
+hr.rule { border: none; border-top: 1px solid var(--line); margin: 0; }
+
+/* -------- Type utilities -------- */
+.h-display {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-weight: 500;
+  letter-spacing: -0.012em;
+  line-height: 1.05;
+}
+
+.h-sans {
+  font-family: 'Inter', system-ui, sans-serif;
+  letter-spacing: -0.005em;
+}
+
+.mono {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-feature-settings: 'ss01';
+}
+
+.code-inline {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.88em;
+  background: var(--code-bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--ink-2);
+}
+
+/* -------- Card -------- */
+.card {
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  transition: border-color 120ms, transform 120ms;
+}
+.card-hover:hover { border-color: var(--ink-3); }
+
+/* -------- Buttons -------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--bg-elev);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 120ms, border-color 120ms, color 120ms;
+}
+.btn:hover { border-color: var(--ink-3); }
+
+.btn-primary {
+  background: var(--ink);
+  color: var(--bg-elev);
+  border-color: var(--ink);
+}
+.btn-primary:hover { background: var(--ink-2); border-color: var(--ink-2); }
+
+.btn-accent {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.btn-accent:hover { filter: brightness(0.95); }
+
+.btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--ink-2);
+}
+.btn-ghost:hover { background: var(--bg-sunken); color: var(--ink); }
+
+.btn-sm { height: 30px; padding: 0 10px; font-size: 13px; }
+
+/* -------- Chips -------- */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  background: var(--bg-sunken);
+  color: var(--ink-3);
+  border: 1px solid var(--line-2);
+  letter-spacing: 0.01em;
+}
+.chip-accent {
+  background: var(--accent-tint);
+  color: var(--accent);
+  border-color: transparent;
+}
+
+/* -------- Focus ring -------- */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* -------- Theme transition -------- */
+body, .card, .btn, .chip {
+  transition: background-color 200ms, color 200ms, border-color 200ms;
+}
+
+/* -------- Scrollbar -------- */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--ink-4); }
+::-webkit-scrollbar-track { background: transparent; }
