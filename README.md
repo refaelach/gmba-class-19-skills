@@ -41,7 +41,7 @@ If a specific skill in this repo relies on tool-specific features (sub-agents, f
 1. Browse the categories below and find a skill that fits what you're working on.
 2. Either copy the skill folder into your tool's skills directory (see table above), or clone the whole repo and symlink / copy individual skills:
    ```bash
-   git clone https://github.com/YOUR-ORG/gmba-class-19-skills.git
+   git clone https://github.com/refaelach/gmba-class-19-skills.git
    ```
 3. Trigger it naturally in conversation. Each `SKILL.md` lists the trigger phrases at the top.
 
