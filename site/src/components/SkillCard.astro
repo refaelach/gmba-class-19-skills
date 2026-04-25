@@ -1,73 +1,111 @@
 ---
 interface Props {
-  slug: string;
-  category: string;
+  skill: {
+    slug: string;
+    name: string;
+    title: string;
+    summary: string;
+    category: string;
+    tools: string[];
+    testedShort: string;
+  };
   categoryName: string;
-  title: string;
-  summary: string;
-  author?: string;
 }
 
-const { slug, category, categoryName, title, summary, author } = Astro.props;
+const { skill, categoryName } = Astro.props;
 const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
-const href = `${baseUrl}/skills/${slug}`;
+const href = `${baseUrl}/skills/${skill.slug}`;
+const tools = (skill.tools || []).slice(0, 4);
 ---
-<a class="skill-card" href={href} data-category={category}>
-  <div class="skill-card-head">
-    <span class="skill-cat mono">{categoryName}</span>
+<a class="card card-hover skill-card" href={href}>
+  <div class="skill-meta">
+    <span class="mono skill-cat">{categoryName}</span>
+    <span class="skill-dot" aria-hidden="true"></span>
+    <span class="mono skill-name">{skill.name}</span>
   </div>
-  <div class="skill-title h-display">{title}</div>
-  <div class="skill-summary">{summary}</div>
-  {author && (
-    <div class="skill-author mono">{author}</div>
-  )}
+  <h3 class="h-display skill-title">{skill.title}</h3>
+  <p class="skill-summary">{skill.summary}</p>
+  <div class="skill-foot">
+    <div class="skill-tools">
+      {tools.map((t) => (
+        <span class="tool-dot" title={t}>{t.charAt(0).toUpperCase()}</span>
+      ))}
+    </div>
+    <span class="mono skill-tested">tested · {skill.testedShort}</span>
+  </div>
 </a>
 
 <style>
   .skill-card {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding: 22px 22px 20px;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    background: var(--bg);
-    color: var(--ink);
+    gap: 12px;
+    padding: 22px;
     text-decoration: none;
-    transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
-    height: 100%;
+    color: inherit;
   }
-  .skill-card:hover {
-    border-color: var(--ink-3);
-    box-shadow: 0 6px 20px -10px rgba(0, 0, 0, 0.18);
-    transform: translateY(-1px);
-  }
-  .skill-card-head {
+  .skill-card:hover { text-decoration: none; }
+  .skill-meta {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: 8px;
+    color: var(--ink-4);
   }
   .skill-cat {
-    font-size: 10.5px;
+    font-size: 11px;
     color: var(--ink-3);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
+  }
+  .skill-dot {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--ink-4);
+    display: inline-block;
+  }
+  .skill-name {
+    font-size: 11px;
+    color: var(--ink-4);
   }
   .skill-title {
-    font-size: 19px;
-    font-weight: 500;
-    line-height: 1.25;
+    font-size: 22px;
+    line-height: 1.15;
     color: var(--ink);
+    margin: 0;
   }
   .skill-summary {
     font-size: 14px;
     line-height: 1.55;
     color: var(--ink-2);
+    margin: 0;
     flex: 1;
   }
-  .skill-author {
+  .skill-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 10px;
+    border-top: 1px solid var(--line-2);
+    margin-top: 4px;
+  }
+  .skill-tools {
+    display: flex;
+    gap: 4px;
+  }
+  .tool-dot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    background: var(--bg-sunken);
+    border: 1px solid var(--line-2);
+    color: var(--ink-3);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+  }
+  .skill-tested {
     font-size: 11px;
     color: var(--ink-4);
-    margin-top: 4px;
   }
 </style>

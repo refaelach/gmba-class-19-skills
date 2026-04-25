@@ -185,6 +185,75 @@ hr.rule { border: none; border-top: 1px solid var(--line); margin: 0; }
   border-color: transparent;
 }
 
+/* -------- Markdown body (.md) — used inside skill detail body sections -------- */
+.md h2 {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+  margin: 40px 0 14px;
+}
+.md h2:first-child { margin-top: 0; }
+.md h3 {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--ink);
+  margin: 24px 0 10px;
+}
+.md p {
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--ink-2);
+  margin: 0 0 16px;
+}
+.md ul, .md ol { padding-left: 20px; margin: 0 0 16px; }
+.md li {
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--ink-2);
+  margin-bottom: 6px;
+}
+.md strong { color: var(--ink); }
+.md code {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 13px;
+  background: var(--code-bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.md pre {
+  background: var(--code-bg);
+  padding: 16px;
+  border-radius: 8px;
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 0 0 16px;
+}
+.md pre code { background: none; padding: 0; }
+.md blockquote {
+  border-left: 3px solid var(--accent);
+  padding-left: 14px;
+  margin: 0 0 16px;
+  color: var(--ink-2);
+  font-style: italic;
+}
+.md table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 16px;
+  font-size: 14px;
+}
+.md th, .md td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+.md th { font-weight: 500; color: var(--ink); }
+
 /* -------- Focus ring -------- */
 button:focus-visible,
 a:focus-visible,
