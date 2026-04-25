@@ -63,6 +63,7 @@ If a specific skill in this repo relies on tool-specific features (sub-agents, f
 
 ### Exam or Class Prep
 - **[exam-prep](./skills/exam-or-class-prep/exam-prep)** — Turn one or more past exams into a realistic mock exam that mirrors the real one's question types, structure, point distribution, and phrasing style. Withholds answers until the student submits, so it works as actual practice instead of read-along review. Surfaces topics that repeat across years as high-yield. Works on PDFs, images, or pasted text.
+- **[mba-infographic-prompts](./skills/exam-or-class-prep/mba-infographic-prompts)** — Turn an MBA topic (formula, framework, process, comparison, study sheet, concept map) into a polished, ready-to-paste GPT image prompt. Picks one of six visual archetypes (cheat-sheet, narrative-collage, quadrant-framework, comparison-evidence, mind-map, procedural-flowchart), asks for aspect ratio, and outputs a prompt formatted per the OpenAI gpt-image-2 guide plus a fresh ChatGPT link. Produces text, not images. *Full support on tools that load bundled skill resources. Partial on prompt-only setups (paste the references file too).*
 
 *More coming. This is just the start.*
 
