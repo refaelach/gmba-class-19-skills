@@ -88,10 +88,16 @@ function parseDescription(description) {
 
   const desc = description.trim();
 
-  // summaryLine = everything before "MANDATORY TRIGGERS"
+  // summaryLine = the first SENTENCE of the pre-MANDATORY-TRIGGERS prose. The
+  // description field can be multi-sentence to give the AI agent context, but
+  // the website card only displays this one short summary — keeping it to one
+  // sentence makes cards roughly the same height. We split on a period that's
+  // followed by a space and a capital letter (a real sentence boundary) and
+  // ignore mid-sentence periods like "e.g., X.".
   const mandIdx = desc.indexOf('MANDATORY TRIGGERS');
-  const summaryLine =
-    mandIdx >= 0 ? desc.slice(0, mandIdx).trim() : desc.trim();
+  const beforeTriggers = (mandIdx >= 0 ? desc.slice(0, mandIdx) : desc).trim();
+  const sentenceMatch = beforeTriggers.match(/^.*?[.!?](?=\s+[A-Z]|\s*$)/);
+  const summaryLine = sentenceMatch ? sentenceMatch[0].trim() : beforeTriggers;
 
   // Find each marker by its (case-insensitive-ish) prefix. The two TRIGGERS
   // markers always carry a `:` (the STRONG one may have a parenthetical
