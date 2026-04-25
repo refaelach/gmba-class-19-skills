@@ -74,7 +74,7 @@ Use kebab-case for the skill name (e.g. `add-case-study-structure`, `add-flashca
 
 Place your skill under one of the existing folders in `skills/`:
 
-- `research/`, `writing/`, `analysis/`, `decision-making/`, `exam-prep/`, `productivity/`
+- `research/`, `writing/`, `analysis/`, `decision-making/`, `exam-or-class-prep/`, `productivity/`
 
 If none of these fit, **open an issue first** to discuss adding a new category. Don't add new top-level categories in the same PR as a new skill.
 
