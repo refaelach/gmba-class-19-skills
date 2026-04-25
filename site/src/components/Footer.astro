@@ -4,15 +4,11 @@ const repoUrl = 'https://github.com/refaelach/gmba-class-19-skills';
 ---
 <footer class="site-footer">
   <div class="footer-inner">
-    <div class="footer-block">
-      <div class="footer-title h-display">GMBA Class 19 Skills</div>
-      <div class="footer-tag">Built by classmates, for classmates. Open source under MIT.</div>
-    </div>
+    <div class="mono footer-meta">gmba-class-19-skills · MIT · maintained by @refaelach</div>
     <div class="footer-links">
-      <a href={repoUrl} target="_blank" rel="noopener">GitHub repo</a>
-      <a href={`${baseUrl}/how-to-use`}>How to use</a>
-      <a href={`${baseUrl}/contribute`}>Contribute</a>
-      <a href={`${repoUrl}/blob/main/CONTRIBUTING.md`} target="_blank" rel="noopener">Contribution rules</a>
+      <a class="link" href={repoUrl}>GitHub</a>
+      <a class="link" href={`${repoUrl}/blob/main/LICENSE`}>License</a>
+      <a class="link" href={`${baseUrl}/contribute`}>Contribute</a>
     </div>
   </div>
 </footer>
@@ -20,43 +16,24 @@ const repoUrl = 'https://github.com/refaelach/gmba-class-19-skills';
 <style>
   .site-footer {
     border-top: 1px solid var(--line);
-    background: var(--bg);
     margin-top: 80px;
+    padding: 32px 32px 48px;
   }
   .footer-inner {
-    max-width: 1180px;
+    max-width: 1120px;
     margin: 0 auto;
-    padding: 32px;
     display: flex;
-    align-items: flex-start;
     justify-content: space-between;
-    gap: 32px;
     flex-wrap: wrap;
+    gap: 16px;
   }
-  .footer-title {
-    font-size: 16px;
-    font-weight: 500;
-    margin-bottom: 4px;
-  }
-  .footer-tag {
-    font-size: 13px;
+  .footer-meta {
+    font-size: 12px;
     color: var(--ink-3);
-    line-height: 1.55;
-    max-width: 360px;
   }
   .footer-links {
     display: flex;
-    gap: 22px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-  .footer-links a {
+    gap: 20px;
     font-size: 13px;
-    color: var(--ink-2);
-    text-decoration: none;
-  }
-  .footer-links a:hover {
-    color: var(--ink);
-    text-decoration: underline;
   }
 </style>

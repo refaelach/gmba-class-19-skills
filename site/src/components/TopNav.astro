@@ -1,40 +1,44 @@
 ---
 const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
-const path = Astro.url.pathname.replace(baseUrl, '') || '/';
+const rawPath = Astro.url.pathname;
+const path = (rawPath.startsWith(baseUrl) ? rawPath.slice(baseUrl.length) : rawPath) || '/';
 
-const links = [
-  { href: '/', label: 'Browse', match: (p: string) => p === '/' || p.startsWith('/skills/') },
-  { href: '/how-to-use', label: 'How to use', match: (p: string) => p.startsWith('/how-to-use') },
-  { href: '/contribute', label: 'Contribute', match: (p: string) => p.startsWith('/contribute') },
-];
+const isBrowse = path === '/' || path.startsWith('/skills/');
+const isHowTo = path === '/how-to-use' || path.startsWith('/how-to-use/');
+const isContribute = path === '/contribute' || path.startsWith('/contribute/');
+
+const repoUrl = 'https://github.com/refaelach/gmba-class-19-skills';
 ---
 <header class="app-nav">
   <div class="nav-inner">
     <a class="brand" href={`${baseUrl}/`}>
-      <span class="brand-mark mono">19</span>
-      <span class="brand-name h-display">GMBA Skills</span>
-      <span class="brand-tag mono">Class 19</span>
+      <span class="brand-mark">19</span>
+      <span class="brand-name h-sans">GMBA Skills</span>
+      <span class="brand-tag mono">class 19</span>
     </a>
 
     <nav class="nav-links">
-      {links.map((l) => (
-        <a
-          href={`${baseUrl}${l.href}`}
-          class={`nav-link${l.match(path) ? ' active' : ''}`}
-        >
-          {l.label}
-        </a>
-      ))}
-      <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">
-        <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="12" cy="12" r="4"/>
-          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
-        </svg>
-        <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-        </svg>
-      </button>
+      <a href={`${baseUrl}/`} class={`nav-link h-sans${isBrowse ? ' active' : ''}`}>Browse</a>
+      <a href={`${baseUrl}/how-to-use`} class={`nav-link h-sans${isHowTo ? ' active' : ''}`}>How to use</a>
+      <a href={`${baseUrl}/contribute`} class={`nav-link h-sans${isContribute ? ' active' : ''}`}>Contribute</a>
     </nav>
+
+    <a class="gh-link h-sans" href={repoUrl} target="_blank" rel="noopener" aria-label="GitHub repository">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+      </svg>
+      <span>GitHub</span>
+    </a>
+
+    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">
+      <svg class="icon-sun" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="4"/>
+        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+      </svg>
+      <svg class="icon-moon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+    </button>
   </div>
 </header>
 
@@ -58,15 +62,13 @@ const links = [
     z-index: 30;
     background: var(--bg);
     border-bottom: 1px solid var(--line);
-    backdrop-filter: saturate(180%) blur(8px);
   }
   .nav-inner {
-    max-width: 1180px;
+    max-width: 1120px;
     margin: 0 auto;
     padding: 14px 32px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 24px;
   }
   .brand {
@@ -75,66 +77,76 @@ const links = [
     gap: 10px;
     text-decoration: none;
     color: var(--ink);
+    padding: 0;
   }
+  .brand:hover { text-decoration: none; }
   .brand-mark {
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
     background: var(--ink);
     color: var(--bg);
-    font-size: 12px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
     font-weight: 600;
     display: inline-flex;
     align-items: center;
     justify-content: center;
   }
   .brand-name {
-    font-size: 18px;
+    font-size: 14px;
     font-weight: 500;
+    color: var(--ink);
   }
   .brand-tag {
     font-size: 11px;
-    color: var(--ink-3);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
+    color: var(--ink-4);
+    margin-left: 2px;
   }
   .nav-links {
     display: flex;
     align-items: center;
-    gap: 22px;
+    gap: 18px;
+    flex: 1;
+    flex-wrap: wrap;
   }
   .nav-link {
-    color: var(--ink-2);
-    text-decoration: none;
     font-size: 14px;
-    font-weight: 500;
+    color: var(--ink-3);
+    font-weight: 400;
+    text-decoration: none;
     padding: 6px 0;
-    border-bottom: 2px solid transparent;
-    transition: color 0.12s ease, border-color 0.12s ease;
+    background: none;
+    border: none;
+    border-bottom: 1px solid transparent;
   }
-  .nav-link:hover {
-    color: var(--ink);
-  }
+  .nav-link:hover { text-decoration: none; color: var(--ink-2); }
   .nav-link.active {
     color: var(--ink);
-    border-bottom-color: var(--accent);
+    font-weight: 500;
+    border-bottom: 1px solid var(--ink);
   }
+  .gh-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--ink-3);
+    text-decoration: none;
+  }
+  .gh-link:hover { text-decoration: none; color: var(--ink-2); }
   .theme-toggle {
     background: transparent;
     border: 1px solid var(--line);
     border-radius: 6px;
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     color: var(--ink-2);
-    transition: color 0.12s, border-color 0.12s;
-  }
-  .theme-toggle:hover {
-    color: var(--ink);
-    border-color: var(--ink-3);
+    padding: 0;
   }
   .icon-sun { display: none; }
   .icon-moon { display: inline-block; }
@@ -142,9 +154,6 @@ const links = [
   :global([data-theme="dark"]) .icon-moon { display: none; }
 
   @media (max-width: 720px) {
-    .nav-inner { padding: 12px 20px; gap: 14px; }
-    .brand-tag { display: none; }
-    .nav-links { gap: 14px; }
-    .nav-link { font-size: 13px; }
+    .gh-link { display: none; }
   }
 </style>

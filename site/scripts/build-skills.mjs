@@ -218,7 +218,7 @@ function splitBodyIntoSections(body) {
       while (probe < lines.length && lines[probe].trim() === '') probe++;
       if (
         probe < lines.length &&
-        /^\*\*(Author|Created|Tested on|Real tasks tested)\*\*:/i.test(
+        /^\*\*(Author|Created|Tested on|Real tasks tested):?\*\*\s*:?/i.test(
           lines[probe].trim()
         )
       ) {
@@ -358,8 +358,9 @@ function parseFooter(footerText) {
 
   // Each field is on its own line like:
   //   **Author:** Refael (Rafa) Lachmish ([@refaelach](https://...))
+  // Capture the colon INSIDE the **...** so it's stripped from the label.
   const fieldPattern =
-    /^\s*\*\*([^*]+?)\*\*\s*:?\s*(.+?)\s*$/;
+    /^\s*\*\*([^*:]+?):?\*\*\s*:?\s*(.+?)\s*$/;
 
   for (const rawLine of footerText.split('\n')) {
     const line = rawLine.trim();
@@ -392,6 +393,46 @@ function parseFooter(footerText) {
   return out;
 }
 
+// Determine the verified-tools list for a skill. Default to the common four
+// (Claude / ChatGPT / Gemini / Codex). If the Compatibility section indicates
+// partial / prompt-only / Custom-GPT support, narrow to the two with full
+// support (Claude / Codex).
+function deriveTools(_rawCompatibility, _renderedCompatibility) {
+  // Every skill in the repo works in all four tools via copy-paste at minimum.
+  // The Compatibility section calls out polish gradations (e.g., "partial on
+  // prompt-only"), not "doesn't work elsewhere" — so we always show the full
+  // four-tool set. If a skill genuinely depends on tool-specific features that
+  // make it unusable elsewhere, we'd encode that as a frontmatter field rather
+  // than scraping the Compatibility prose.
+  return ['Claude', 'ChatGPT', 'Gemini', 'Codex'];
+}
+
+// Derive a short display string from a "Tested on" footer value.
+function deriveTestedShort(testedOn) {
+  if (!testedOn) return '';
+  const original = String(testedOn).trim();
+  if (!original) return '';
+
+  // Take first comma- or slash-separated entry.
+  const first = original.split(/[,/]/)[0].trim();
+  if (!first) return original;
+
+  // If the first entry contains parens, pull out the parenthesized text.
+  const parenMatch = /\(([^)]+)\)/.exec(first);
+  if (parenMatch) {
+    const inside = parenMatch[1].trim();
+    return inside || first;
+  }
+
+  // Otherwise strip a leading "Claude " if present.
+  if (/^Claude\s+/.test(first)) {
+    const stripped = first.replace(/^Claude\s+/, '').trim();
+    return stripped || first;
+  }
+
+  return first;
+}
+
 async function buildSkillEntry(skillMdPath) {
   const raw = await readFile(skillMdPath, 'utf8');
   const parsed = matter(raw);
@@ -420,7 +461,7 @@ async function buildSkillEntry(skillMdPath) {
   if (!triggers.doNot) warn(`${relPath}: no 'Do NOT trigger' clause found`);
   if (!triggers.doWhen) warn(`${relPath}: no 'DO trigger when' clause found`);
 
-  const { h1, sections, footer } = splitBodyIntoSections(body);
+  const { h1, sections, rawSections, footer } = splitBodyIntoSections(body);
 
   // Title: prefer H1, else title-cased slug.
   const title = h1 || titleCase(slug);
@@ -455,6 +496,12 @@ async function buildSkillEntry(skillMdPath) {
   const bodyForRender = stripFooter(body);
   const bodyHtml = marked.parse(bodyForRender);
 
+  const tools = deriveTools(
+    rawSections ? rawSections.compatibility : null,
+    sections ? sections.compatibility : null
+  );
+  const testedShort = deriveTestedShort(footer ? footer.testedOn : null);
+
   return {
     slug,
     category,
@@ -467,6 +514,8 @@ async function buildSkillEntry(skillMdPath) {
     bodyMarkdown: bodyForRender,
     sections,
     footer,
+    tools,
+    testedShort,
     githubPath: relPath,
     hasReferences,
     frontmatter: fm,
@@ -482,7 +531,7 @@ function stripFooter(body) {
       while (probe < lines.length && lines[probe].trim() === '') probe++;
       if (
         probe < lines.length &&
-        /^\*\*(Author|Created|Tested on|Real tasks tested)\*\*:/i.test(
+        /^\*\*(Author|Created|Tested on|Real tasks tested):?\*\*\s*:?/i.test(
           lines[probe].trim()
         )
       ) {

@@ -7,363 +7,458 @@ import categoriesData from '../data/categories.json';
 type Skill = {
   slug: string;
   category: string;
+  name: string;
   title: string;
   summaryLine: string;
-  footer?: { authorHandle?: string };
+  triggers: { mandatory: string[]; strong: string[] };
+  tools: string[];
+  testedShort: string;
+  footer?: { created?: string };
 };
 
-type Category = { slug: string; title: string; description: string; skillCount: number };
+type Category = {
+  slug: string;
+  title: string;
+  description: string;
+  skillCount: number;
+};
 
-const skills = skillsData as Skill[];
-const categories = categoriesData as Category[];
-
+const skills = skillsData as unknown as Skill[];
+const categories = categoriesData as unknown as Category[];
 const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
 
-// Build a count per category to hide empty ones
-const counts: Record<string, number> = {};
-for (const s of skills) counts[s.category] = (counts[s.category] || 0) + 1;
-const populatedCategories = categories.filter((c) => counts[c.slug] > 0);
+// Skill rows for SkillCard, with categoryName resolved.
+const categoryByslug = Object.fromEntries(categories.map((c) => [c.slug, c]));
+const skillRows = skills.map((s) => ({
+  skill: {
+    slug: s.slug,
+    name: s.name,
+    title: s.title,
+    summary: s.summaryLine,
+    category: s.category,
+    tools: s.tools || ['Claude', 'ChatGPT', 'Gemini', 'Codex'],
+    testedShort: s.testedShort || '',
+  },
+  categoryName: categoryByslug[s.category]?.title || s.category,
+}));
 
-// Resolve category display name
-const categoryName = (slug: string) =>
-  categories.find((c) => c.slug === slug)?.title || slug;
+// Search payload: minimal data the dropdown needs.
+const searchPayload = skills.map((s) => ({
+  slug: s.slug,
+  name: s.name,
+  title: s.title,
+  summary: s.summaryLine,
+  category: s.category,
+  categoryName: categoryByslug[s.category]?.title || s.category,
+  triggers: [...(s.triggers?.mandatory || []), ...(s.triggers?.strong || [])],
+}));
 
-// Sort skills by title for stable display
-const sortedSkills = [...skills].sort((a, b) => a.title.localeCompare(b.title));
+// Categories with counts, hide empty.
+const populatedCategories = categories.filter((c) => c.skillCount > 0);
+
+// Sort skills alphabetically for the All-skills grid.
+const allSkillsSorted = [...skillRows].sort((a, b) =>
+  a.skill.title.localeCompare(b.skill.title),
+);
+
+// Recently added: top 3 by created date (descending), with empty-string fallback.
+const recentSkills = [...skillRows]
+  .sort((a, b) => {
+    const ca = skills.find((x) => x.slug === a.skill.slug)?.footer?.created || '';
+    const cb = skills.find((x) => x.slug === b.skill.slug)?.footer?.created || '';
+    return cb.localeCompare(ca);
+  })
+  .slice(0, 3);
 ---
 <Layout title="Browse skills · GMBA Class 19">
   <section class="hero">
-    <div class="hero-inner">
-      <div class="hero-tag mono">For Class 19, by Class 19</div>
-      <h1 class="hero-title h-display">Pre-built AI guides for the courses we're actually taking.</h1>
+    <div class="container">
+      <div class="eyebrow mono">GMBA · Class 19</div>
+      <h1 class="hero-title h-display">
+        Pre-built AI guides, by Class 19, for Class 19.
+      </h1>
       <p class="hero-sub">
-        Pick a skill, paste it into ChatGPT or Claude, get sharper answers.
-        Built by classmates from prompts that worked. Open source — fork, use,
-        contribute back.
+        Pick one, paste it into ChatGPT or Claude, get better answers.
       </p>
-      <div class="hero-actions">
-        <a class="btn btn-accent" href={`${baseUrl}/how-to-use`}>How to use a skill</a>
-        <a class="btn" href={`${baseUrl}/contribute`}>Share one of yours</a>
-      </div>
-    </div>
-  </section>
+      <p class="hero-meta mono">Open source — fork, use, contribute back.</p>
 
-  <section class="search-strip">
-    <div class="search-inner">
-      <input
-        id="skill-search"
-        type="search"
-        placeholder="Search by name, topic, or category…"
-        autocomplete="off"
-        aria-label="Search skills"
-      />
-      <div class="search-meta mono" id="skill-count">
-        {skills.length} skill{skills.length === 1 ? '' : 's'}
+      <div class="search-shell">
+        <div class="search-box">
+          <span class="search-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="7"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </span>
+          <input
+            id="skill-search"
+            type="search"
+            placeholder="Search skills — try 'WACC', 'case', 'memo'…"
+            autocomplete="off"
+            aria-label="Search skills"
+          />
+          <a class="search-help h-sans" href={`${baseUrl}/how-to-use`}>How to use →</a>
+        </div>
+        <div id="search-results" class="search-dropdown card" hidden></div>
       </div>
     </div>
   </section>
 
   {populatedCategories.length > 0 && (
-    <section class="page-section" id="categories-section">
-      <div class="section-head">
-        <h2 class="section-title h-display">Categories</h2>
-      </div>
-      <div class="cat-grid">
-        {populatedCategories.map((c) => (
-          <a class="cat-card" href={`#cat-${c.slug}`} data-cat-link={c.slug}>
-            <div class="cat-name h-display">{c.title}</div>
-            <div class="cat-desc">{c.description}</div>
-            <div class="cat-count mono">
-              {counts[c.slug]} skill{counts[c.slug] === 1 ? '' : 's'}
-            </div>
-          </a>
-        ))}
+    <section class="page-section">
+      <div class="container">
+        <div class="section-head">
+          <h2 class="section-label">Categories</h2>
+          <span class="section-meta mono">
+            {skills.length} skill{skills.length === 1 ? '' : 's'} · {populatedCategories.length} categor{populatedCategories.length === 1 ? 'y' : 'ies'}
+          </span>
+        </div>
+        <div class="cat-tile-grid">
+          {populatedCategories.map((c) => (
+            <button
+              class="cat-tile"
+              data-cat-slug={c.slug}
+              data-cat-name={c.title}
+            >
+              <div class="cat-tile-top">
+                <span class="mono cat-tile-slug">{c.slug}</span>
+                <span class="mono cat-tile-count">{String(c.skillCount).padStart(2, '0')}</span>
+              </div>
+              <div class="cat-tile-name h-display">{c.title}</div>
+              <div class="cat-tile-desc">{c.description}</div>
+            </button>
+          ))}
+        </div>
       </div>
     </section>
   )}
 
-  <section class="page-section" id="all-skills-section">
-    <div class="section-head">
-      <h2 class="section-title h-display">All skills</h2>
-      <div class="section-meta mono" id="empty-state-msg" style="display: none;">
-        No skills match your search. Try a different term or
-        <a href="#" id="clear-search">clear the filter</a>.
+  <section class="page-section" id="all-skills">
+    <div class="container">
+      <h2 class="section-label">All skills</h2>
+      <div class="card-grid" id="all-grid">
+        {allSkillsSorted.map((row) => (
+          <SkillCard skill={row.skill} categoryName={row.categoryName} />
+        ))}
       </div>
     </div>
-
-    {populatedCategories.map((c) => (
-      <div class="cat-section" id={`cat-${c.slug}`} data-cat-section={c.slug}>
-        <div class="cat-section-head">
-          <span class="cat-section-name mono">{c.title.toUpperCase()}</span>
-          <span class="cat-section-line"></span>
-        </div>
-        <div class="skill-grid">
-          {sortedSkills
-            .filter((s) => s.category === c.slug)
-            .map((s) => (
-              <div
-                class="skill-card-wrap"
-                data-skill-card
-                data-title={s.title.toLowerCase()}
-                data-summary={s.summaryLine.toLowerCase()}
-                data-category={c.title.toLowerCase()}
-                data-slug={s.slug.toLowerCase()}
-              >
-                <SkillCard
-                  slug={s.slug}
-                  category={s.category}
-                  categoryName={c.title}
-                  title={s.title}
-                  summary={s.summaryLine}
-                  author={s.footer?.authorHandle}
-                />
-              </div>
-            ))}
-        </div>
-      </div>
-    ))}
-
-    {skills.length === 0 && (
-      <div class="empty-state">
-        <p>No skills yet. Be the first —</p>
-        <a class="btn btn-accent" href={`${baseUrl}/contribute`}>Share a skill</a>
-      </div>
-    )}
   </section>
+
+  {recentSkills.length > 0 && (
+    <section class="page-section">
+      <div class="container">
+        <h2 class="section-label">Recently added</h2>
+        <div class="card-grid">
+          {recentSkills.map((row) => (
+            <SkillCard skill={row.skill} categoryName={row.categoryName} />
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
 </Layout>
 
-<script>
-  // Live filter — substring match across title, summary, category, slug.
-  const input = document.getElementById('skill-search') as HTMLInputElement | null;
-  const cards = Array.from(document.querySelectorAll('[data-skill-card]')) as HTMLElement[];
-  const catSections = Array.from(document.querySelectorAll('[data-cat-section]')) as HTMLElement[];
-  const countEl = document.getElementById('skill-count');
-  const emptyMsg = document.getElementById('empty-state-msg');
-  const clearLink = document.getElementById('clear-search');
+<script define:vars={{ searchPayload, baseUrl }}>
+  // Live search dropdown — filters across name, title, summary, category, triggers.
+  const input = document.getElementById('skill-search');
+  const dropdown = document.getElementById('search-results');
+  const allGrid = document.getElementById('all-grid');
+  const catTiles = document.querySelectorAll('.cat-tile');
 
-  const total = cards.length;
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
 
-  function applyFilter(query: string) {
-    const q = query.trim().toLowerCase();
-    let visible = 0;
+  function filterSkills(q) {
+    const query = q.trim().toLowerCase();
+    if (!query) return null;
+    return searchPayload
+      .filter((s) =>
+        s.title.toLowerCase().includes(query) ||
+        s.name.toLowerCase().includes(query) ||
+        s.summary.toLowerCase().includes(query) ||
+        s.categoryName.toLowerCase().includes(query) ||
+        s.category.toLowerCase().includes(query) ||
+        s.triggers.some((t) => t.toLowerCase().includes(query))
+      )
+      .slice(0, 6);
+  }
 
-    for (const card of cards) {
-      const hay = [
-        card.dataset.title || '',
-        card.dataset.summary || '',
-        card.dataset.category || '',
-        card.dataset.slug || '',
-      ].join(' ');
-      const show = !q || hay.includes(q);
-      card.style.display = show ? '' : 'none';
-      if (show) visible++;
+  function renderDropdown(results) {
+    if (!results) {
+      dropdown.hidden = true;
+      dropdown.innerHTML = '';
+      return;
     }
-
-    // Hide empty category sections in filter mode
-    for (const section of catSections) {
-      const hasVisible = section.querySelector('[data-skill-card]:not([style*="none"])');
-      section.style.display = hasVisible ? '' : 'none';
+    dropdown.hidden = false;
+    if (results.length === 0) {
+      dropdown.innerHTML = `
+        <div class="search-empty">
+          No matches.
+          <a class="link" href="#all-skills">Browse all skills</a>
+        </div>`;
+      return;
     }
-
-    if (countEl) {
-      countEl.textContent = q
-        ? `${visible} of ${total} skill${total === 1 ? '' : 's'}`
-        : `${total} skill${total === 1 ? '' : 's'}`;
-    }
-    if (emptyMsg) emptyMsg.style.display = visible === 0 && q ? '' : 'none';
+    dropdown.innerHTML = results
+      .map(
+        (r) => `
+        <a class="search-row" href="${baseUrl}/skills/${r.slug}">
+          <div class="search-row-text">
+            <div class="search-row-title h-sans">${escapeHtml(r.title)}</div>
+            <div class="search-row-summary">${escapeHtml(r.summary)}</div>
+          </div>
+          <span class="chip">${escapeHtml(r.categoryName)}</span>
+        </a>
+      `,
+      )
+      .join('');
   }
 
   if (input) {
-    input.addEventListener('input', (e) => applyFilter((e.target as HTMLInputElement).value));
-  }
-  if (clearLink) {
-    clearLink.addEventListener('click', (e) => {
-      e.preventDefault();
-      if (input) {
-        input.value = '';
-        applyFilter('');
-        input.focus();
-      }
+    input.addEventListener('input', (e) => {
+      const results = filterSkills(e.target.value);
+      renderDropdown(results);
+    });
+    input.addEventListener('blur', () => {
+      // Delay so click on a result fires before we hide.
+      setTimeout(() => {
+        dropdown.hidden = true;
+      }, 180);
+    });
+    input.addEventListener('focus', (e) => {
+      const results = filterSkills(e.target.value);
+      renderDropdown(results);
     });
   }
+
+  // Category tile click → seed the search with the category name and scroll up.
+  catTiles.forEach((tile) => {
+    tile.addEventListener('click', () => {
+      const name = tile.getAttribute('data-cat-name') || '';
+      if (input) {
+        input.value = name;
+        input.focus();
+        renderDropdown(filterSkills(name));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    });
+  });
 </script>
 
 <style>
-  .hero {
-    border-bottom: 1px solid var(--line);
-  }
-  .hero-inner {
-    max-width: 1180px;
+  .container {
+    max-width: 1120px;
     margin: 0 auto;
-    padding: 80px 32px 64px;
-  }
-  .hero-tag {
-    font-size: 11px;
-    color: var(--ink-3);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-bottom: 18px;
-  }
-  .hero-title {
-    font-size: clamp(34px, 4.6vw, 52px);
-    line-height: 1.06;
-    margin: 0;
-    font-weight: 500;
-  }
-  .hero-sub {
-    margin: 22px 0 0;
-    font-size: 17px;
-    line-height: 1.55;
-    color: var(--ink-2);
-    max-width: 640px;
-  }
-  .hero-actions {
-    margin-top: 28px;
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
+    padding: 0 32px;
   }
 
-  .search-strip {
+  /* Hero */
+  .hero {
     border-bottom: 1px solid var(--line);
-    background: var(--bg);
-    position: sticky;
-    top: 60px;
-    z-index: 20;
+    padding: 88px 0 56px;
   }
-  .search-inner {
-    max-width: 1180px;
-    margin: 0 auto;
-    padding: 16px 32px;
+  .eyebrow {
+    font-size: 12px;
+    color: var(--ink-3);
+    letter-spacing: 0.04em;
+    margin-bottom: 28px;
+  }
+  .hero-title {
+    font-size: clamp(40px, 5.4vw, 64px);
+    color: var(--ink);
+    margin: 0;
+    max-width: 880px;
+  }
+  .hero-sub {
+    font-size: 19px;
+    line-height: 1.5;
+    color: var(--ink-2);
+    margin: 24px 0 0;
+    max-width: 640px;
+  }
+  .hero-meta {
+    font-size: 12px;
+    color: var(--ink-4);
+    margin: 12px 0 0;
+  }
+
+  /* Inline search */
+  .search-shell {
+    margin-top: 40px;
+    max-width: 560px;
+    position: relative;
+  }
+  .search-box {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 10px;
+    height: 52px;
+    padding: 0 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--bg-elev);
+  }
+  .search-icon {
+    color: var(--ink-3);
+    display: inline-flex;
+    align-items: center;
   }
   #skill-search {
     flex: 1;
-    padding: 10px 14px;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    background: var(--bg);
-    color: var(--ink);
-    font: inherit;
-    font-size: 15px;
+    border: none;
     outline: none;
-    transition: border-color 0.15s;
+    background: transparent;
+    font: inherit;
+    font-size: 16px;
+    color: var(--ink);
   }
-  #skill-search:focus {
-    border-color: var(--ink-3);
-  }
-  .search-meta {
-    font-size: 11px;
+  .search-help {
+    font-size: 13px;
     color: var(--ink-3);
+    padding: 4px 0 4px 12px;
+    border-left: 1px solid var(--line);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .search-help:hover { color: var(--ink); text-decoration: none; }
+
+  .search-dropdown {
+    position: absolute;
+    top: 60px;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    padding: 6px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+  }
+  .search-dropdown[hidden] { display: none; }
+  .search-empty {
+    padding: 14px 12px;
+    color: var(--ink-3);
+    font-size: 14px;
+  }
+  .search-empty a { margin-left: 4px; }
+
+  :global(.search-row) {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    color: inherit;
+  }
+  :global(.search-row:hover) { background: var(--bg-sunken); }
+  :global(.search-row-text) { flex: 1; min-width: 0; }
+  :global(.search-row-title) {
+    font-size: 14px;
+    color: var(--ink);
+    font-weight: 500;
+  }
+  :global(.search-row-summary) {
+    font-size: 12px;
+    color: var(--ink-3);
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
   }
 
+  /* Page section */
   .page-section {
-    max-width: 1180px;
-    margin: 0 auto;
-    padding: 56px 32px 0;
+    padding: 56px 0 0;
   }
+  .page-section + .page-section { padding-top: 48px; }
+
   .section-head {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
     margin-bottom: 24px;
+    gap: 12px;
+    flex-wrap: wrap;
   }
-  .section-title {
-    font-size: 24px;
-    font-weight: 500;
-    margin: 0;
+  .section-label {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-3);
+    margin: 0 0 24px;
   }
+  .section-head .section-label { margin: 0; }
   .section-meta {
     font-size: 12px;
-    color: var(--ink-3);
-  }
-  .section-meta a {
-    color: var(--accent);
-    text-decoration: underline;
+    color: var(--ink-4);
   }
 
-  .cat-grid {
+  /* Categories tile grid — 1px hairline gaps, single bordered container */
+  .cat-tile-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 16px;
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   }
-  .cat-card {
+  .cat-tile {
+    background: var(--bg-elev);
+    border: none;
+    padding: 24px 22px;
+    text-align: left;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
     display: flex;
     flex-direction: column;
     gap: 8px;
-    padding: 22px;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    background: var(--bg);
-    color: var(--ink);
-    text-decoration: none;
-    transition: border-color 0.15s, transform 0.15s;
+    min-height: 132px;
+    transition: background 120ms;
   }
-  .cat-card:hover {
-    border-color: var(--ink-3);
-    transform: translateY(-1px);
-  }
-  .cat-name {
-    font-size: 18px;
-    font-weight: 500;
-  }
-  .cat-desc {
-    font-size: 13.5px;
-    color: var(--ink-2);
-    line-height: 1.55;
-    flex: 1;
-  }
-  .cat-count {
-    font-size: 11px;
-    color: var(--ink-3);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-  }
-
-  .cat-section {
-    margin-bottom: 48px;
-  }
-  .cat-section:last-child {
-    margin-bottom: 0;
-  }
-  .cat-section-head {
+  .cat-tile:hover { background: var(--bg-sunken); }
+  .cat-tile-top {
     display: flex;
     align-items: center;
-    gap: 14px;
-    margin-bottom: 18px;
+    justify-content: space-between;
   }
-  .cat-section-name {
+  .cat-tile-slug {
+    font-size: 11px;
+    color: var(--ink-4);
+  }
+  .cat-tile-count {
     font-size: 11px;
     color: var(--ink-3);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
   }
-  .cat-section-line {
-    flex: 1;
-    height: 1px;
-    background: var(--line);
+  .cat-tile-name {
+    font-size: 22px;
+    color: var(--ink);
   }
-  .skill-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 16px;
+  .cat-tile-desc {
+    font-size: 14px;
+    color: var(--ink-2);
+    line-height: 1.45;
   }
 
-  .empty-state {
-    padding: 60px 0;
-    text-align: center;
-    color: var(--ink-3);
-  }
-  .empty-state .btn {
-    margin-top: 16px;
+  /* Skill cards grid */
+  .card-grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   }
 
   @media (max-width: 720px) {
-    .hero-inner { padding: 56px 20px 40px; }
-    .page-section { padding: 40px 20px 0; }
-    .search-inner { padding: 12px 20px; }
+    .container { padding: 0 20px; }
+    .hero { padding: 56px 0 40px; }
+    .hero-title { font-size: 32px; }
+    .page-section { padding-top: 40px; }
+    .search-shell { max-width: none; }
   }
 </style>
