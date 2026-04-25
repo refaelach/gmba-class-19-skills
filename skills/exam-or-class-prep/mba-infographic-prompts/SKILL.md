@@ -5,9 +5,7 @@ description: "Generate a ready-to-paste GPT image prompt for an MBA classroom in
 
 # MBA Infographic Prompt Generator
 
-This skill turns an MBA lesson topic into a ready-to-paste prompt for GPT image generation (gpt-image-2 via ChatGPT). It does **not** generate images directly. The user pastes the produced prompt into a fresh ChatGPT chat.
-
-The skill is built around **six infographic archetypes** that cover the visual styles MBA content typically needs. The skill suggests one archetype based on the topic, the user can override, and the skill then produces a prompt tuned to that archetype's style language.
+Turns an MBA topic into a ready-to-paste prompt for GPT image generation (gpt-image-2 via ChatGPT). The skill produces text, not images — the user pastes the prompt into a fresh ChatGPT chat. Built around six visual archetypes the skill picks from based on the topic.
 
 ## Compatibility
 
@@ -25,11 +23,11 @@ The skill loads `references/archetypes.md` from disk at runtime to get the full 
 
 ## When NOT to use this skill
 
-- The user wants to render the actual image. This skill produces prompts only; the user pastes the prompt into ChatGPT to render it.
-- The topic is non-MBA / non-business (personal art, unrelated visuals, etc.) — the archetype style language is tuned for business education content.
-- The user wants a live data chart from a spreadsheet — that needs a charting / data-viz tool, not an image-generation prompt.
-- The user wants a multi-slide deck. This is for single-frame infographics, not presentations.
-- The user already knows the exact prompt they want — just hand them the ChatGPT link.
+- The user wants the actual image rendered — this skill produces prompts only.
+- The topic is non-MBA / non-business — the archetype language is tuned for business content.
+- The user wants a live chart from a spreadsheet — use a data-viz tool.
+- The user wants a multi-slide deck — this is for single-frame infographics.
+- The user already has the exact prompt they want — just point them at ChatGPT.
 
 ## Workflow
 
@@ -174,28 +172,17 @@ The six archetypes were derived from real reference infographics. Their distingu
 - **Don't ask for both portrait and landscape "just in case".** Pick one per generation. The user can re-run with a different ratio if needed.
 - **Don't suggest the user use the OpenAI API directly.** The user's workflow is ChatGPT in a browser. Keep it that way.
 
-## Example: full skill run
+## Example
 
-User: "I need an infographic for the DuPont identity for my finance class."
+**User:** "I need an infographic for the DuPont identity for my finance class."
 
-You:
-> The DuPont identity decomposes ROE into three drivers, so I'd lean **procedural-flowchart** to show the decomposition cleanly. **Mind-map** would also work if you want a more illustrated look — your call.
->
-> Going with procedural-flowchart unless you say otherwise. What aspect ratio — landscape (1536x1024, good for slides), portrait (1024x1536, good for handouts), or square?
+**You:** Suggest **procedural-flowchart** for clean decomposition (mind-map as an alternative). Ask for aspect ratio.
 
-User: "flowchart is fine, landscape"
+**User:** "flowchart, landscape."
 
-You: [reads `references/archetypes.md` for procedural-flowchart, then produces the full prompt — wrapped in a single fenced code block for one-click copy — with the DuPont decomposition: ROE = Net Profit Margin × Asset Turnover × Equity Multiplier, with each term defined and arrows showing how they multiply to ROE, plus the constraint that the formula must render with × symbols not asterisks, plus a one-sentence definition under each step heading so the audience can follow without prior knowledge, plus the no-watermark/no-logo block, plus quality cue. Then the ChatGPT link.]
+**You:** Read `references/archetypes.md` for the flowchart style language, then output the full prompt as a single fenced code block: ROE = Net Profit Margin × Asset Turnover × Equity Multiplier, each term defined inline, arrows showing the multiplication, formula rendered with proper `×` symbols, one-sentence definitions under each step, the no-watermark/no-logo constraints block, and the quality cue. Then the ChatGPT link to paste it into.
 
-## Example: source-document workflow
-
-User: [uploads a PDF of a business book] "Make me an infographic from this for my class."
-
-You: [reads enough of the PDF to identify the book's central framework] "This is *The Starfish and the Spider* by Brafman and Beckstrom. The book has two iconic teaching frameworks worth visualizing:
-> 1. **The Five Legs of a Decentralized Organization** — the most distinctive framework in the book (Circles, Catalyst, Ideology, Preexisting Network, Champion). Best as a mind-map with a starfish at the center.
-> 2. **Spider vs Starfish** — the headline metaphor contrasting centralized and decentralized organizations. Best as a comparison-evidence layout.
->
-> Want one of these, or both? And what aspect ratio?"
+**Mode B (source document):** If the user uploads a PDF, identify the source's central framework first (e.g. *The Starfish and the Spider* → "Five Legs of a Decentralized Organization" or the spider/starfish metaphor), name the top two candidates, let the user pick one, then proceed.
 
 ## Inputs the skill expects
 

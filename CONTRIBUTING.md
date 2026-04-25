@@ -181,6 +181,35 @@ Reviewers commit to turning around PRs within a few days and helping keep the qu
 - Hardcoded to one specific course, professor, or assignment
 - Silently assumes tool-specific features without saying so
 - Missing README update (yes, again)
+- **Visible-section content over budget** (see below)
+
+## Length budget for visible sections
+
+The website at [refaelach.github.io/gmba-class-19-skills](https://refaelach.github.io/gmba-class-19-skills/) shows a subset of each `SKILL.md` by default — the "student-facing" sections. The rest (compatibility, how-it-works, contributor notes) is collapsed behind a "Show implementation details" expander. We keep visible content brief and uniform across skills so a student scanning two skill pages spends similar time on each.
+
+| Section | Soft cap (words) |
+|---|---|
+| Hook paragraph (above the first H2) | 80 |
+| When to use this skill | 100 |
+| When NOT to use this skill | 100 |
+| Example | 250 |
+| Inputs | 80 |
+| Outputs | 80 |
+| **Total of all visible sections** | **600** |
+
+Caps are soft: the build pipeline (`site/scripts/build-skills.mjs`) emits warnings when a section is over, but the build still succeeds. Reviewers will ask you to trim or move prose into the collapsed sections (How it works / Notes for contributors) before merging, unless the over-budget content has a real reason to be visible.
+
+**The collapsed sections have no hard cap** — that's where the workflow detail, edge cases, contributor notes, and compatibility wiring live. Be as long as the skill genuinely needs there.
+
+**Tightening tips:**
+- Cut hedging ("you might want to consider…" → "consider…")
+- Use bullets over paragraphs for lists
+- Move worked-example prose into the Example section, not into When-to-use
+- The detailed step-by-step belongs in How it works (collapsed), not Inputs/Outputs
+
+### Legacy exemption
+
+`skills/decision-making/llm-council` predates this template and is exempt — its visible sections currently exceed the budget. Don't use it as a model for new submissions.
 
 ## Improving an Existing Skill
 

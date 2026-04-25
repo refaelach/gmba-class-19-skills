@@ -18,10 +18,10 @@ The single best signal for what your professor will test, and how, is what they'
 
 ## When NOT to use this skill
 
-- The student wants flashcards or a single-topic deep-dive — that's not exam prep, that's concept review.
-- The student wants help solving a specific homework problem — answer the problem, don't generate a fake exam.
-- The student has zero exam material to share. In that case, ask if they can get even one past exam, a sample problem set, or the syllabus + a chapter list. Without an artifact to learn from, this skill is guessing.
-- The student wants the answer key right away. This skill withholds answers until the student attempts the exam, on purpose. If they want a worked example instead, just walk them through one — don't go through the mock-exam ceremony.
+- The student wants flashcards or a single-topic deep-dive — that's concept review, not exam prep.
+- The student wants help solving a specific homework problem — answer it directly.
+- The student has zero exam material. Ask for at least one past exam, a problem set, or a syllabus chapter list. Without an artifact, this skill is guessing.
+- The student wants the answer key up front. This skill withholds answers until they attempt the exam — that's the point. If they want a worked example, walk them through one without the mock-exam ceremony.
 
 ## How it works
 
@@ -93,9 +93,9 @@ If the student wants more practice on a weak area, offer to generate a focused d
 
 ## Inputs the skill expects
 
-- **At least one past or sample exam** — PDF, image (photo or scan), Word doc, or pasted text. More than one is better; the skill will use repetition across years to weight topics.
-- **Optionally**: the course name, the upcoming exam date, or specific topics the student wants emphasized. None of this is required — defaults are fine.
-- **Optionally**: any constraints the student wants the mock to honor (time-boxed, open-book vs. closed-book, calculator-only, etc.). If silent, mirror whatever the originals declared.
+- **At least one past or sample exam** — PDF, image, Word doc, or pasted text. More is better; repetition across years signals high-yield topics.
+- **Optional**: course name, exam date, topics to emphasize.
+- **Optional**: format constraints (time limit, open-book, calculator policy). If silent, mirror the originals.
 
 ## Outputs the skill produces
 
@@ -106,23 +106,21 @@ If the student wants more practice on a weak area, offer to generate a focused d
 
 ## Example
 
-**Student prompt:** "I have my Corporate Finance final next Tuesday. Here are the last three years' finals — can you make me a mock exam to practice on?"
+**Student:** "Corporate Finance final next Tuesday. Here are the last three years' finals — can you make me a mock?"
 
 **The skill:**
 
-1. Reads all three exams. Notes that each one has Section A (10 MCQs, 2 pts each), Section B (3 short-answer numerical problems, 10 pts each), and Section C (1 case essay, 40 pts). Total 90 points, 2 hours, formula sheet allowed, financial calculator required. Notes that NPV/IRR appears in two of the three years, WACC appears in all three, capital structure shows up once.
+1. Reads all three. Detects the pattern: 2 hours, 90 points, three sections (10 MCQs × 2 pts, 3 numerical × 10 pts, 1 case essay × 40 pts). Formula sheet + financial calculator allowed. WACC appears in all three years, NPV/IRR in two, capital structure in one.
 
-2. Tells the student:
+2. Reports the pattern back to the student so they can confirm, and notes it'll over-weight WACC and NPV since they keep recurring.
 
-   > "Pattern from your three past finals: 2-hour exam, 90 points, three sections (10 MCQs at 2 pts, 3 numerical problems at 10 pts, 1 case essay at 40 pts). Formula sheet + financial calculator allowed. WACC is in all three years, NPV/IRR is in two, capital structure is in one. The case essay always asks you to recommend a financing decision and defend it. I'll over-weight WACC and NPV in the mock since they keep coming back."
+3. Generates a fresh mock in the same shape — new numbers, new scenarios, same structure. The case essay asks them to evaluate a financing recommendation for a fictional firm.
 
-3. Generates a mock exam in exactly that structure, with new numbers and new scenarios but the same shape of questions. The case essay asks the student to evaluate a financing recommendation for a fictional firm with given financials.
+4. Sets exam conditions and waits — no answers shown until submission.
 
-4. Tells the student to take it under exam conditions — 2 hours, formula sheet, calculator — and signals they'll grade only after submission.
+5. After "done," grades each item: MCQs with distractor analysis, numericals with full solution paths, case essay against a rubric (correct WACC? right tradeoffs? defensible recommendation?).
 
-5. When the student says "done," walks through each MCQ (correct answer + why each distractor was wrong), each numerical problem (full solution path), and the case essay (rubric: did they compute WACC correctly? Did they identify the right capital structure tradeoffs? Did they make a defensible recommendation?).
-
-6. Closes with: "Your MCQs were strong (9/10) but you lost ground on the WACC numerical — you used book values instead of market values for the equity weight. Drill three more WACC problems before Tuesday. The case essay was solid on the recommendation but light on quantitative support — practice citing specific numbers from the case in your argument."
+6. Closes with a debrief: "MCQs strong (9/10). You lost ground on the WACC numerical — used book weights instead of market. Drill three more before Tuesday. Case essay was solid but light on quantitative support — cite specific numbers next time."
 
 ## Notes for contributors
 
