@@ -74,12 +74,18 @@ The short version: a skill should solve a real problem you've actually had, foll
 
 **Important:** every PR that adds a new skill must also update the "Available Skills" section of this README. Reviewers will reject PRs that don't. See the [step-by-step contribution flow](./CONTRIBUTING.md#how-to-submit-a-skill) for exactly what to update and where.
 
+### Reviewers
+
+PRs are reviewed by:
+
+- **Rafa** (Refael Lachmish) — [@refaelach](https://github.com/refaelach) · [Rephaell@gmail.com](mailto:Rephaell@gmail.com)
+- **Dani Sofer** — [@soferdani](https://github.com/soferdani)
+
+`main` is protected: every PR needs at least one approving review from a reviewer above before it can be merged.
+
 ### Want to help review submissions?
 
-If you'd like to help curate this repo by reviewing PRs, reach out to **Rafa** (Refael Lachmish):
-
-- 📧 Email: [Rephaell@gmail.com](mailto:Rephaell@gmail.com)
-- 💬 WhatsApp: same number / contact via email first
+If you'd like to help curate this repo by reviewing PRs, reach out to **Rafa** (contact above).
 
 Reviewers help keep the quality bar high and turn around PRs in a few days. If you've shipped a skill yourself and want to pay it forward, this is the way.
 
