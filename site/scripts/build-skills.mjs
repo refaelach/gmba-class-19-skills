@@ -430,6 +430,60 @@ function deriveTestedShort(testedOn) {
   return first;
 }
 
+// Word-count budget for the visible-by-default sections on the website.
+// Implementation-detail sections (compatibility, howItWorks, notesForContributors)
+// are collapsed by default in the UI, so they have no hard cap here.
+// Surface a warning when the visible content gets too long — the website is
+// what students see; over-long visible sections fight the brevity goal.
+const VISIBLE_SECTION_BUDGET = {
+  hookParagraph: 80,
+  whenToUse: 100,
+  whenNotToUse: 100,
+  example: 250,
+  inputs: 80,
+  outputs: 80,
+};
+const VISIBLE_TOTAL_BUDGET = 600;
+
+// Strip markdown syntax (bullets, code fences, links) before counting so the
+// number reflects readable prose, not formatting overhead.
+function countWords(md) {
+  if (!md) return 0;
+  const cleaned = md
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/`[^`]*`/g, ' ')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/[*_~#>|-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!cleaned) return 0;
+  return cleaned.split(' ').length;
+}
+
+function lintSectionLengths(slug, rawSections) {
+  if (!rawSections) return;
+  let visibleTotal = 0;
+  for (const [key, cap] of Object.entries(VISIBLE_SECTION_BUDGET)) {
+    const text = rawSections[key];
+    if (!text) continue;
+    const n = countWords(text);
+    visibleTotal += n;
+    if (n > cap) {
+      warn(
+        `${slug}: visible section "${key}" is ${n} words (budget ${cap}). ` +
+          `Long visible sections fight the brevity goal — consider trimming or moving prose into "How it works" / Notes (collapsed by default).`,
+      );
+    }
+  }
+  if (visibleTotal > VISIBLE_TOTAL_BUDGET) {
+    warn(
+      `${slug}: total visible-section content is ${visibleTotal} words (budget ${VISIBLE_TOTAL_BUDGET}). ` +
+        `The student-facing page will scroll farther than peer skills.`,
+    );
+  }
+}
+
 async function buildSkillEntry(skillMdPath) {
   const raw = await readFile(skillMdPath, 'utf8');
   const parsed = matter(raw);
@@ -498,6 +552,9 @@ async function buildSkillEntry(skillMdPath) {
     sections ? sections.compatibility : null
   );
   const testedShort = deriveTestedShort(footer ? footer.testedOn : null);
+
+  // Lint visible-section lengths against the budget — emits warnings only.
+  lintSectionLengths(slug, rawSections);
 
   return {
     slug,
