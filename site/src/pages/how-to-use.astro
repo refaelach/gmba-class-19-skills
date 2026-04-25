@@ -1,67 +1,997 @@
 ---
 import Layout from '../layouts/Layout.astro';
 const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+// Tool compatibility matrix.
+// tier: 'A' = native, 'B' = paste, 'C' = save-as-config
+const tools = [
+  {
+    name: 'Claude.ai',
+    tier: 'C',
+    summary: 'Web app. Custom Skills uploaded in Settings → Skills, available across new chats.',
+    how: 'Settings → Capabilities → Skills → Upload .skill folder. Or paste the .md into a Project to anchor it for that workspace.',
+  },
+  {
+    name: 'Claude Code',
+    tier: 'A',
+    summary: 'Native skill loader. Drop folder in plugin path; agent reads SKILL.md on relevant tasks.',
+    how: 'Place at ~/.claude/skills/{name}/ or .claude/skills/{name}/ in a project. Restart the CLI; trigger with a phrase from MANDATORY TRIGGERS.',
+  },
+  {
+    name: 'ChatGPT (Plus / Pro)',
+    tier: 'B',
+    summary: 'Paste-and-go. No native skill loader.',
+    how: 'Open a fresh chat. Paste the skill, prepend the wrapper line, then ask your real question.',
+  },
+  {
+    name: 'Custom GPT',
+    tier: 'C',
+    summary: 'Save the skill once as a GPT. Reuse forever.',
+    how: 'In ChatGPT → My GPTs → Create. Paste the skill body into the Instructions box. Set the GPT name to the skill name. Save. Now starting a chat with that GPT auto-loads the skill — no wrapper line needed.',
+  },
+  {
+    name: 'ChatGPT Project',
+    tier: 'C',
+    summary: 'Anchors the skill for one project workspace.',
+    how: 'In ChatGPT, create a Project. Add the skill .md as a Project file or paste it into Project Instructions. Every chat in that project starts with the skill loaded.',
+  },
+  {
+    name: 'Codex (CLI)',
+    tier: 'A',
+    summary: 'Native skill loader.',
+    how: 'Drop folder at ~/.codex/skills/{name}/. Trigger with a slash-command of the skill name or a phrase from MANDATORY TRIGGERS.',
+  },
+  {
+    name: 'Cursor',
+    tier: 'A',
+    summary: 'Reads skills from the project-local agents directory.',
+    how: 'Place folder at .agents/skills/{name}/ (project-level) or ~/.cursor/skills/ (user-level). Reload Cursor.',
+  },
+  {
+    name: 'Gemini (web)',
+    tier: 'B',
+    summary: 'Paste-and-go.',
+    how: 'gemini.google.com → new chat → paste skill + wrapper line → ask question. Gem (custom Gemini) supports saving the skill as Instructions, same as Custom GPTs.',
+  },
+  {
+    name: 'Gemini CLI',
+    tier: 'A',
+    summary: 'Native skill loader.',
+    how: 'Drop folder at ~/.gemini/skills/{name}/. Trigger with a phrase from STRONG TRIGGERS.',
+  },
+  {
+    name: 'GitHub Copilot Chat',
+    tier: 'B',
+    summary: 'Paste into chat as guidance, or commit to AGENTS.md / .github/copilot-instructions.md for repo-wide effect.',
+    how: 'For one-off: paste skill + wrapper line into the Copilot Chat panel. For repo-wide: drop the .md content into .github/copilot-instructions.md.',
+  },
+  {
+    name: 'Windsurf / Cline / OpenCode',
+    tier: 'A',
+    summary: 'All three respect the SKILL.md format.',
+    how: "Drop the .skill folder into the tool's skills directory (typically .skills/ or ~/.{tool}/skills/). Consult the tool's docs for the exact path.",
+  },
+  {
+    name: 'Perplexity',
+    tier: 'B',
+    summary: 'Paste-and-go. Spaces support persistent instructions.',
+    how: 'Paste skill + wrapper line into a chat. To persist, create a Space and add the skill as Custom Instructions.',
+  },
+  {
+    name: 'Notion AI / Slack AI / other in-app assistants',
+    tier: 'B',
+    summary: 'Paste-and-go for one-off use.',
+    how: "These don't load .skill files. Paste the skill content + wrapper line at the top of your prompt. Works fine for short tasks; less reliable for long sessions.",
+  },
+];
+
+const tierLabel: Record<string, { label: string; classes: string }> = {
+  A: { label: 'Native', classes: 'chip chip-accent' },
+  B: { label: 'Paste', classes: 'chip' },
+  C: { label: 'Save as config', classes: 'chip' },
+};
+
+const nativeRows = [
+  ['Claude Code', '~/.claude/skills/{name}/   or   .claude/skills/{name}/', 'a phrase from MANDATORY TRIGGERS'],
+  ['Codex CLI', '~/.codex/skills/{name}/', 'slash-command of the skill name'],
+  ['Cursor', '.agents/skills/{name}/   (project)   or   ~/.cursor/skills/', 'a phrase from MANDATORY TRIGGERS'],
+  ['Gemini CLI', '~/.gemini/skills/{name}/', 'a phrase from STRONG TRIGGERS'],
+  ['Windsurf', '.windsurf/skills/{name}/', 'a phrase from MANDATORY TRIGGERS'],
+  ['Cline', '.cline/skills/{name}/', 'a phrase from MANDATORY TRIGGERS'],
+  ['OpenCode', '.opencode/skills/{name}/', 'a phrase from MANDATORY TRIGGERS'],
+  ['GitHub Copilot Chat', '.github/copilot-instructions.md   (paste body, repo-wide)', 'naturally in chat'],
+  ['Antigravity IDE', '.antigravity/skills/{name}/', 'a phrase from MANDATORY TRIGGERS'],
+];
+
+const issues = [
+  {
+    q: "ChatGPT didn't follow the skill.",
+    a: "It's been buried by long conversation, or you forgot the wrapper line. Paste the skill again at the top of a fresh chat.",
+  },
+  {
+    q: 'The AI tried to answer the skill itself instead of waiting for my question.',
+    a: 'You skipped the wrapper line. Re-paste the skill and prepend "Use the above as your guide, then ask me what I want to work on" before hitting send.',
+  },
+  {
+    q: 'I get different results from my classmate.',
+    a: "Expected. Skills are guides, not deterministic programs. Same skill on the same prompt won't always land in the same place.",
+  },
+  {
+    q: 'My free ChatGPT seems to ignore parts of the skill.',
+    a: 'Free models have shorter context and weaker instruction-following. The skill still works — it just lands harder on Plus or Claude Pro.',
+  },
+  {
+    q: 'I built a Custom GPT and it stopped using the skill after a few turns.',
+    a: "Skill instructions live in the GPT's system prompt; long chats can shift focus. Open a fresh chat with the GPT, or paste the wrapper line again to re-anchor.",
+  },
+];
+
+const gptCards = [
+  {
+    tool: 'ChatGPT — Custom GPT',
+    steps: [
+      'My GPTs → Create',
+      'Paste skill into "Instructions"',
+      'Name it after the skill',
+      'Save. Use the GPT instead of regular ChatGPT.',
+    ],
+    note: 'Best for skills you use weekly. Plus or Pro required.',
+  },
+  {
+    tool: 'Claude — Project',
+    steps: [
+      'Sidebar → Projects → New project',
+      'Add skill .md to Project Knowledge',
+      'Or paste into Project Instructions',
+      'Open chats inside the project.',
+    ],
+    note: 'Pro plan. Skill applies to every chat in the project.',
+  },
+  {
+    tool: 'Gemini — Gem',
+    steps: [
+      'Gemini → Gems → New Gem',
+      'Paste skill into Instructions',
+      'Save and select the Gem when chatting',
+    ],
+    note: 'Available on Gemini Advanced.',
+  },
+];
 ---
 <Layout title="How to use a skill · GMBA Class 19">
-  <article class="placeholder-page">
-    <div class="page-tag mono">how to use</div>
-    <h1 class="h-display">Coming soon.</h1>
-    <p>
-      The full how-to-use guide — covering the copy &amp; paste flow, Custom GPTs / Projects /
-      Gems, and native skill folders for Claude Code / Codex / Cursor / Gemini CLI — is the next
-      thing landing on this site.
-    </p>
-    <p>
-      In the meantime, every skill detail page has a <strong>Copy skill</strong> button.
-      Paste the result into a fresh chat with this wrapper line:
-    </p>
-    <pre><code>Use the following as your guide for this conversation,
-then ask me what topic I want to work on.
+  <article class="howto">
+    <div class="container">
+      <div class="eyebrow mono">how to use a skill</div>
+      <h1 class="h-display howto-title">How to actually use a skill.</h1>
+      <p class="howto-sub">
+        A skill is a pre-written instruction set that turns your AI assistant into a specialist for one task.
+        Three ways to load it, depending on the tool you use. Most students only need the first one.
+      </p>
 
-[paste the skill here]</code></pre>
-    <p>
-      <a class="btn btn-accent" href={baseUrl + '/'}>Browse skills</a>
-    </p>
+      {/* Tabs */}
+      <section class="tabs-section">
+        <div class="tabs" role="tablist" aria-label="How to load a skill">
+          <button class="tab is-active" data-tab="paste" role="tab" aria-selected="true">
+            <div class="tab-label">Copy &amp; paste</div>
+            <div class="tab-sub mono">ChatGPT, Claude, Gemini</div>
+          </button>
+          <button class="tab" data-tab="gpt" role="tab" aria-selected="false">
+            <div class="tab-label">Save as Custom GPT / Project</div>
+            <div class="tab-sub mono">set once, reuse</div>
+          </button>
+          <button class="tab" data-tab="bundle" role="tab" aria-selected="false">
+            <div class="tab-label">Native skill folder</div>
+            <div class="tab-sub mono">Claude Code, Codex, Cursor</div>
+          </button>
+        </div>
+
+        {/* Tab 1 — Copy & paste */}
+        <div class="tab-panel" data-tab-panel="paste">
+          <div class="path-eyebrow mono">Path 1 · The happy path</div>
+          <h2 class="h-display path-title">Four steps. Forty-five seconds.</h2>
+          <p class="path-sub">
+            Works in any chat-based assistant — ChatGPT, Claude.ai, Gemini, Perplexity, Copilot Chat, Notion AI, Slack AI.
+          </p>
+
+          <div class="steps">
+            <div class="step">
+              <div class="step-num mono">01</div>
+              <div class="step-body">
+                <h3 class="h-display step-title">Find a skill</h3>
+                <p class="step-text">Search the home page or pick a category. Each card has a one-line summary so you can scan a dozen and pick fast.</p>
+              </div>
+              <div class="shot shot-home">
+                <div class="shot-bar">
+                  <span></span><span></span><span></span>
+                </div>
+                <div class="shot-home-body">
+                  <div class="mono shot-eyebrow">GMBA · CLASS 19</div>
+                  <div class="h-display shot-title">Pre-built AI guides…</div>
+                  <div class="shot-grid">
+                    <div class="shot-card shot-card-active">
+                      <div class="shot-line w70"></div>
+                      <div class="shot-line shot-line-thin w90"></div>
+                      <div class="shot-line shot-line-thin w60"></div>
+                    </div>
+                    <div class="shot-card">
+                      <div class="shot-line w70"></div>
+                      <div class="shot-line shot-line-thin w90"></div>
+                      <div class="shot-line shot-line-thin w60"></div>
+                    </div>
+                    <div class="shot-card">
+                      <div class="shot-line w70"></div>
+                      <div class="shot-line shot-line-thin w90"></div>
+                      <div class="shot-line shot-line-thin w60"></div>
+                    </div>
+                    <div class="shot-card">
+                      <div class="shot-line w70"></div>
+                      <div class="shot-line shot-line-thin w90"></div>
+                      <div class="shot-line shot-line-thin w60"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-num mono">02</div>
+              <div class="step-body">
+                <h3 class="h-display step-title">Copy it</h3>
+                <p class="step-text">On the skill page, hit Copy. The full instruction set goes to your clipboard. The button confirms with a checkmark.</p>
+              </div>
+              <div class="shot shot-copy">
+                <span class="chip">wacc-pressure-tester</span>
+                <div class="h-display shot-skill-title">WACC Pressure Tester</div>
+                <div class="shot-copy-box">
+                  <div class="mono shot-eyebrow">USE THIS SKILL</div>
+                  <div class="shot-copy-row">
+                    <div class="shot-copy-btn">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                      Copied
+                    </div>
+                    <div class="shot-copy-spare"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-num mono">03</div>
+              <div class="step-body">
+                <h3 class="h-display step-title">Open ChatGPT, Claude, or Gemini</h3>
+                <p class="step-text">Fresh chat. Don't reuse a long-running conversation — context bleed will dilute the skill.</p>
+              </div>
+              <div class="shot shot-chat">
+                <div class="shot-chat-head">
+                  <div class="shot-avatar"></div>
+                  <span class="mono">new chat</span>
+                </div>
+                <div class="shot-chat-input">Ask anything…</div>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-num mono">04</div>
+              <div class="step-body">
+                <h3 class="h-display step-title">Paste, add one line, ask your question</h3>
+                <p class="step-text">Paste the skill. Above it, write: "Use the above as your guide, then ask me what I want to work on." Send. Then ask the actual thing.</p>
+              </div>
+              <div class="shot shot-paste">
+                <div class="shot-paste-wrapper mono">Use the above as your guide, then ask me what I want to work on.</div>
+                <div class="shot-paste-comment mono"># pasted skill</div>
+                <div class="shot-line w90"></div>
+                <div class="shot-line w70"></div>
+                <div class="shot-line w85"></div>
+                <div class="shot-paste-question">WACC for my finance class</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="callout">
+            <div class="callout-mark mono">?</div>
+            <div>
+              <div class="h-sans callout-title">Why the wrapper line?</div>
+              <p class="callout-text">
+                It tells the AI to treat the skill as instructions, not as your question. Without it, the AI tries to answer the skill itself and gets confused.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Tab 2 — Save as config */}
+        <div class="tab-panel" data-tab-panel="gpt" hidden>
+          <div class="path-eyebrow mono">Path 2 · Set it once</div>
+          <h2 class="h-display path-title">Save the skill as a Custom GPT, Project, or Gem.</h2>
+          <p class="path-sub">
+            If you'll use a skill again and again, paste it once into a Custom GPT (ChatGPT), Project (Claude / ChatGPT), or Gem (Gemini). After that, every chat in that container loads the skill automatically — no wrapper line, no re-pasting.
+          </p>
+
+          <div class="gpt-grid">
+            {gptCards.map((c) => (
+              <div class="card card-hover gpt-card">
+                <div class="h-sans gpt-card-title">{c.tool}</div>
+                <ol class="gpt-card-steps">
+                  {c.steps.map((s) => (<li>{s}</li>))}
+                </ol>
+                <div class="gpt-card-note">{c.note}</div>
+              </div>
+            ))}
+          </div>
+
+          <p class="gpt-footnote">
+            Heads up: when you save a skill as a Custom GPT or Project, the wrapper line is no longer needed — the system prompt is the wrapper. Just open a fresh chat in the GPT/Project and ask your real question directly.
+          </p>
+        </div>
+
+        {/* Tab 3 — Native bundle */}
+        <div class="tab-panel" data-tab-panel="bundle" hidden>
+          <div class="path-eyebrow mono">Path 3 · For coding agents</div>
+          <h2 class="h-display path-title">Drop the .skill folder where the agent looks for it.</h2>
+          <p class="path-sub">
+            Skills are an open standard (originally Anthropic, now adopted across coding tools). Each tool reads a SKILL.md from a known directory and triggers it when your prompt matches. Same file format, different paths.
+          </p>
+
+          <div class="native-table">
+            <div class="native-row native-head mono">
+              <div>Tool</div>
+              <div>Drop the folder into</div>
+              <div>Trigger with</div>
+            </div>
+            {nativeRows.map((row) => (
+              <div class="native-row">
+                <div class="native-tool">{row[0]}</div>
+                <div class="native-path mono">{row[1]}</div>
+                <div class="native-trigger">{row[2]}</div>
+              </div>
+            ))}
+          </div>
+
+          <p class="native-footnote">
+            The .skill bundle on each skill page works as-is in any of these. Open the skill, hit "Download .skill bundle", unzip into the right path, restart the agent.
+          </p>
+        </div>
+      </section>
+
+      {/* Compatibility matrix */}
+      <section class="compat-section">
+        <h2 class="h-display compat-title">Which tool, which path.</h2>
+        <p class="compat-sub">
+          Click any tool to see how it loads the skill. Researched against the open Agent Skills standard and each tool's docs (April 2026).
+        </p>
+
+        <div class="compat-table">
+          {tools.map((t) => (
+            <details class="compat-row">
+              <summary>
+                <div class="compat-row-text">
+                  <div class="h-sans compat-row-name">{t.name}</div>
+                  <div class="compat-row-summary">{t.summary}</div>
+                </div>
+                <span class={tierLabel[t.tier].classes}>{tierLabel[t.tier].label}</span>
+                <span class="compat-chevron" aria-hidden="true">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </span>
+              </summary>
+              <div class="compat-row-body">{t.how}</div>
+            </details>
+          ))}
+        </div>
+
+        <div class="compat-legend">
+          <div><span class="chip chip-accent">Native</span> reads SKILL.md folders directly</div>
+          <div><span class="chip">Save as config</span> save once into a GPT / Project / Gem</div>
+          <div><span class="chip">Paste</span> paste into chat each time</div>
+        </div>
+      </section>
+
+      {/* Two short explainers */}
+      <section class="explainers">
+        <div>
+          <h3 class="h-display explainer-title">What if I have free ChatGPT?</h3>
+          <p class="explainer-text">
+            Skills work on free ChatGPT. The model is weaker, so you'll get sloppier answers and shorter context. For exam-night work, ChatGPT Plus or Claude Pro is the difference between okay and useful.
+          </p>
+        </div>
+        <div>
+          <h3 class="h-display explainer-title">What if my chat gets long and the skill stops working?</h3>
+          <p class="explainer-text">
+            The skill is buried under thousands of tokens. Open a fresh chat and re-paste — or use a Custom GPT / Project where the skill is in the system prompt and never falls out of context.
+          </p>
+        </div>
+      </section>
+
+      {/* Troubleshooting */}
+      <section class="trouble-section">
+        <h2 class="h-display trouble-title">Troubleshooting</h2>
+        <div class="trouble-list">
+          {issues.map((it) => (
+            <details class="trouble-row">
+              <summary>
+                <span class="trouble-chevron" aria-hidden="true">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </span>
+                <span class="h-sans trouble-q">{it.q}</span>
+              </summary>
+              <p class="trouble-a">{it.a}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
+      {/* Bottom CTA */}
+      <section class="bottom-cta">
+        <a class="btn btn-primary" href={baseUrl + '/'}>
+          <span>Browse skills</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </a>
+      </section>
+    </div>
   </article>
 </Layout>
 
+<script>
+  // Tabs — vanilla JS toggle.
+  const tabs = document.querySelectorAll<HTMLButtonElement>('[data-tab]');
+  const panels = document.querySelectorAll<HTMLElement>('[data-tab-panel]');
+
+  tabs.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const target = btn.getAttribute('data-tab');
+      tabs.forEach((b) => {
+        const active = b.getAttribute('data-tab') === target;
+        b.classList.toggle('is-active', active);
+        b.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+      panels.forEach((p) => {
+        const match = p.getAttribute('data-tab-panel') === target;
+        if (match) {
+          p.removeAttribute('hidden');
+        } else {
+          p.setAttribute('hidden', '');
+        }
+      });
+    });
+  });
+</script>
+
 <style>
-  .placeholder-page {
-    max-width: 720px;
+  .container {
+    max-width: 1120px;
     margin: 0 auto;
-    padding: 80px 32px 0;
+    padding: 0 32px;
   }
-  .page-tag {
+
+  .howto {
+    padding: 64px 0 96px;
+  }
+
+  /* Header */
+  .eyebrow {
+    font-size: 13px;
+    color: var(--ink-3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  .howto-title {
+    font-size: clamp(34px, 4.4vw, 48px);
+    margin: 0;
+    color: var(--ink);
+    max-width: 880px;
+  }
+  .howto-sub {
+    font-size: 18px;
+    line-height: 1.55;
+    color: var(--ink-2);
+    margin: 20px 0 0;
+    max-width: 760px;
+  }
+
+  /* Tabs */
+  .tabs-section { margin-top: 48px; }
+  .tabs {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--bg-elev);
+    width: fit-content;
+    flex-wrap: wrap;
+    max-width: 100%;
+  }
+  .tab {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    padding: 8px 14px;
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+    color: var(--ink-3);
+    transition: background 120ms, border-color 120ms, color 120ms;
+  }
+  .tab:hover { color: var(--ink-2); }
+  .tab.is-active {
+    background: var(--bg);
+    border-color: var(--line);
+    color: var(--ink);
+  }
+  .tab-label { font-size: 13px; font-weight: 500; }
+  .tab-sub { font-size: 10px; color: var(--ink-4); margin-top: 2px; }
+
+  .tab-panel { margin-top: 32px; }
+  .tab-panel[hidden] { display: none; }
+
+  /* Path eyebrow / title */
+  .path-eyebrow {
     font-size: 11px;
     color: var(--ink-3);
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    margin-bottom: 16px;
   }
-  h1 {
-    font-size: clamp(34px, 4.4vw, 48px);
-    margin: 0 0 24px;
+  .path-title { font-size: 28px; margin: 8px 0 0; }
+  .path-sub {
+    font-size: 15px;
+    color: var(--ink-2);
+    margin: 12px 0 0;
+    line-height: 1.6;
+  }
+
+  /* Steps */
+  .steps { margin-top: 8px; }
+  .step {
+    display: grid;
+    grid-template-columns: 64px 1fr 1.1fr;
+    gap: 24px;
+    padding: 32px 0;
+    border-top: 1px solid var(--line);
+    align-items: start;
+  }
+  .step-num {
+    font-size: 13px;
+    color: var(--ink-4);
+    padding-top: 4px;
+  }
+  .step-title { font-size: 26px; margin: 0; color: var(--ink); }
+  .step-text {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--ink-2);
+    margin: 12px 0 0;
+  }
+
+  /* Shot mockups (illustrations beside each step) */
+  .shot {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--bg-elev);
+    min-height: 180px;
+    overflow: hidden;
+  }
+  .shot-bar {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--line-2);
+    display: flex;
+    gap: 6px;
+  }
+  .shot-bar span {
+    width: 8px;
+    height: 8px;
+    border-radius: 99px;
+    background: var(--line);
+  }
+  .shot-home-body { padding: 16px; }
+  .shot-eyebrow { font-size: 9px; color: var(--ink-4); }
+  .shot-title {
+    font-size: 14px;
+    color: var(--ink);
+    margin-top: 6px;
+    line-height: 1.2;
+  }
+  .shot-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-top: 12px;
+  }
+  .shot-card {
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 8px 10px;
+    background: var(--bg-elev);
+  }
+  .shot-card-active {
+    border: 1.5px solid var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-tint);
+  }
+  .shot-line {
+    height: 6px;
+    background: var(--ink-3);
+    opacity: 0.7;
+    border-radius: 2px;
+    margin-bottom: 4px;
+  }
+  .shot-line-thin {
+    height: 4px;
+    background: var(--line);
+    opacity: 1;
+  }
+  .w70 { width: 70%; }
+  .w60 { width: 60%; }
+  .w85 { width: 85%; }
+  .w90 { width: 90%; }
+
+  .shot-copy { padding: 16px; }
+  .shot-skill-title { font-size: 14px; color: var(--ink); margin-top: 8px; }
+  .shot-copy-box {
+    margin-top: 12px;
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+  }
+  .shot-copy-row { display: flex; gap: 6px; margin-top: 8px; }
+  .shot-copy-btn {
+    flex: 1;
+    height: 28px;
+    border-radius: 5px;
+    background: var(--accent);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 11px;
     font-weight: 500;
-    line-height: 1.08;
   }
-  p {
-    font-size: 17px;
+  .shot-copy-spare {
+    width: 50px;
+    height: 28px;
+    border-radius: 5px;
+    border: 1px solid var(--line);
+  }
+
+  .shot-chat { padding: 16px; }
+  .shot-chat-head {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 14px;
+    color: var(--ink-3);
+    font-size: 11px;
+  }
+  .shot-avatar {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--ink-3);
+    opacity: 0.5;
+  }
+  .shot-chat-input {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px;
+    min-height: 80px;
+    color: var(--ink-4);
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .shot-paste { padding: 14px; }
+  .shot-paste-wrapper {
+    background: var(--code-bg);
+    border-radius: 4px;
+    padding: 8px;
+    font-size: 10px;
+    color: var(--ink-3);
+    margin-bottom: 8px;
+  }
+  .shot-paste-comment {
+    color: var(--ink-4);
+    font-size: 9px;
+    margin-bottom: 4px;
+  }
+  .shot-paste-question {
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    padding: 6px;
+    background: var(--accent-tint);
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 500;
+    margin-top: 4px;
+  }
+
+  /* Callout */
+  .callout {
+    margin-top: 24px;
+    padding: 20px 22px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--bg-elev);
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .callout-mark {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    background: var(--accent);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .callout-title {
+    font-size: 15px;
+    color: var(--ink);
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+  .callout-text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--ink-2);
+    margin: 0;
+  }
+
+  /* GPT cards (Tab 2) */
+  .gpt-grid {
+    margin-top: 28px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+  }
+  .gpt-card { padding: 18px; }
+  .gpt-card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .gpt-card-steps {
+    padding-left: 18px;
+    margin: 12px 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .gpt-card-steps li {
+    font-size: 13px;
+    color: var(--ink-2);
+    line-height: 1.5;
+  }
+  .gpt-card-note {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line-2);
+    font-size: 12px;
+    color: var(--ink-3);
+    line-height: 1.5;
+  }
+  .gpt-footnote {
+    font-size: 14px;
+    color: var(--ink-3);
+    margin-top: 24px;
+    line-height: 1.6;
+  }
+
+  /* Native table (Tab 3) */
+  .native-table {
+    margin-top: 24px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .native-row {
+    display: grid;
+    grid-template-columns: 1.4fr 2fr 1fr;
+    padding: 14px 16px;
+    border-top: 1px solid var(--line-2);
+    font-size: 13px;
+    color: var(--ink-2);
+    align-items: center;
+    gap: 12px;
+  }
+  .native-row:first-child { border-top: none; }
+  .native-head {
+    background: var(--bg-sunken);
+    font-size: 11px;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .native-tool { font-weight: 500; color: var(--ink); }
+  .native-path { font-size: 12px; color: var(--ink-2); word-break: break-all; }
+  .native-trigger { color: var(--ink-3); }
+  .native-footnote {
+    font-size: 13px;
+    color: var(--ink-4);
+    margin-top: 14px;
+    line-height: 1.55;
+  }
+
+  /* Compatibility matrix */
+  .compat-section { margin-top: 72px; }
+  .compat-title { font-size: 28px; margin: 0; }
+  .compat-sub {
+    font-size: 14px;
+    color: var(--ink-3);
+    margin: 8px 0 24px;
+    line-height: 1.6;
+  }
+  .compat-table {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--bg-elev);
+  }
+  .compat-row { border-top: 1px solid var(--line-2); }
+  .compat-row:first-child { border-top: none; }
+  .compat-row > summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 14px 18px;
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 16px;
+    align-items: center;
+    color: var(--ink);
+  }
+  .compat-row > summary::-webkit-details-marker { display: none; }
+  .compat-row > summary:hover { background: var(--bg-sunken); }
+  .compat-row-name { font-size: 14px; font-weight: 500; }
+  .compat-row-summary { font-size: 12px; color: var(--ink-3); margin-top: 2px; }
+  .compat-chevron {
+    color: var(--ink-3);
+    display: inline-flex;
+    transform: rotate(-90deg);
+    transition: transform 150ms;
+  }
+  .compat-row[open] .compat-chevron { transform: rotate(0deg); }
+  .compat-row-body {
+    padding: 0 18px 18px 18px;
+    font-size: 13px;
+    color: var(--ink-2);
+    line-height: 1.6;
+  }
+  .compat-legend {
+    display: flex;
+    gap: 18px;
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--ink-3);
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .compat-legend > div {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Two-column explainers */
+  .explainers {
+    margin-top: 56px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+  .explainer-title { font-size: 22px; margin: 0; }
+  .explainer-text {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--ink-2);
+    margin: 10px 0 0;
+  }
+
+  /* Troubleshooting */
+  .trouble-section { margin-top: 56px; }
+  .trouble-title { font-size: 28px; margin: 0; }
+  .trouble-list {
+    margin-top: 20px;
+    border-top: 1px solid var(--line);
+  }
+  .trouble-row { border-bottom: 1px solid var(--line); }
+  .trouble-row > summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 16px 0;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: var(--ink);
+  }
+  .trouble-row > summary::-webkit-details-marker { display: none; }
+  .trouble-chevron {
+    color: var(--ink-3);
+    display: inline-flex;
+    transform: rotate(-90deg);
+    transition: transform 150ms;
+  }
+  .trouble-row[open] .trouble-chevron { transform: rotate(0deg); }
+  .trouble-q {
+    font-size: 15px;
+    flex: 1;
+    font-weight: 500;
+  }
+  .trouble-a {
+    margin: 0;
+    padding: 0 0 18px 26px;
+    font-size: 14px;
     line-height: 1.65;
     color: var(--ink-2);
-    margin: 0 0 18px;
   }
-  pre {
-    background: var(--code-bg);
-    padding: 18px;
-    border-radius: 8px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    line-height: 1.55;
-    color: var(--ink);
-    margin: 0 0 22px;
-    overflow-x: auto;
+
+  /* Bottom CTA */
+  .bottom-cta {
+    margin: 72px 0 16px;
+    text-align: center;
+  }
+  .bottom-cta .btn {
+    height: 44px;
+    font-size: 15px;
+    padding: 0 22px;
+  }
+
+  /* Mobile */
+  @media (max-width: 900px) {
+    .gpt-grid { grid-template-columns: 1fr; }
+    .explainers { grid-template-columns: 1fr; gap: 28px; }
   }
   @media (max-width: 720px) {
-    .placeholder-page { padding: 56px 20px 0; }
+    .container { padding: 0 20px; }
+    .howto { padding: 48px 0 72px; }
+    .howto-title { font-size: 32px; }
+
+    .tabs {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      width: 100%;
+      max-width: 100%;
+      -webkit-overflow-scrolling: touch;
+    }
+    .tab { flex: 0 0 auto; }
+
+    .step {
+      grid-template-columns: 48px 1fr;
+      gap: 16px;
+    }
+    .step .shot {
+      grid-column: 1 / -1;
+      margin-top: 8px;
+    }
+    .step-title { font-size: 22px; }
+
+    .native-row {
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+    .native-head { display: none; }
+
+    .compat-row > summary {
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+    }
+    .compat-row > summary .chip { grid-column: 2; }
+    .compat-chevron { grid-column: 2; justify-self: end; }
+
+    .compat-legend { flex-direction: column; gap: 8px; align-items: flex-start; }
   }
 </style>

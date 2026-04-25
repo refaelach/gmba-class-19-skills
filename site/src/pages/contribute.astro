@@ -1,174 +1,924 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import categoriesData from '../data/categories.json';
+
+type Category = { slug: string; title: string; description: string; skillCount: number };
+const categories = categoriesData as unknown as Category[];
 const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
-const repoUrl = 'https://github.com/refaelach/gmba-class-19-skills';
-
-const emailBody = `Hi Rafa,
-
-I have a skill I'd like to share with the cohort.
-
-WHAT IT DOES (one sentence):
-[describe what the skill does]
-
-CATEGORY:
-[research / writing / analysis / decision-making / exam-or-class-prep / productivity]
-
-WHAT YOU SAY TO START IT (1-3 phrases):
-- [phrase one]
-- [phrase two]
-
-THE PROMPT / INSTRUCTIONS:
-[paste the actual prompt you give the AI]
-
-ONE EXAMPLE:
-What I typed: [paste]
-What the AI gave back: [paste]
-
-ME:
-Name / handle: [your name]
-Used for: [class, assignment, optional]
-
-Thanks!
-`;
-
-const issueBody = `## What does it do?
-(one sentence)
-
-## Category
-(research / writing / analysis / decision-making / exam-or-class-prep / productivity)
-
-## Trigger phrases
-What you'd say to start it. List 1-3.
-
-## The prompt / instructions
-Paste the actual prompt you give the AI.
-
-## Example
-**What I typed:**
-
->
-
-**What the AI gave back:**
-
-`;
-
-const mailtoUrl = `mailto:Rephaell@gmail.com?subject=${encodeURIComponent('Skill submission')}&body=${encodeURIComponent(emailBody)}`;
-const issueUrl = `${repoUrl}/issues/new?title=${encodeURIComponent('Skill proposal: ')}&body=${encodeURIComponent(issueBody)}`;
 ---
 <Layout title="Contribute · GMBA Class 19">
-  <article class="placeholder-page">
-    <div class="page-tag mono">contribute</div>
-    <h1 class="h-display">Share a prompt that worked.</h1>
-    <p>
-      Spent two hours coaching ChatGPT through a case prep, a marketing brief, an ops
-      framework? Three quick questions and the rest of Class 19 can run the same thing
-      in 30 seconds.
-    </p>
-    <p>
-      The friendly contribute form is the next thing landing on this site. For now,
-      pick the path that fits:
-    </p>
-
-    <div class="path-grid">
-      <a class="path-card" href={mailtoUrl}>
-        <div class="path-title h-display">Email it to Rafa</div>
-        <div class="path-desc">No GitHub needed. Send your prompt, your example, and your name. Rafa drafts the SKILL.md and ships the PR.</div>
-        <div class="path-cta mono">Open email →</div>
-      </a>
-      <a class="path-card" href={issueUrl} target="_blank" rel="noopener">
-        <div class="path-title h-display">Open a GitHub issue</div>
-        <div class="path-desc">If you have a GitHub account and want to propose a skill before drafting it. Reviewers will respond with feedback.</div>
-        <div class="path-cta mono">New issue →</div>
-      </a>
-      <a class="path-card" href={`${repoUrl}/blob/main/CONTRIBUTING.md`} target="_blank" rel="noopener">
-        <div class="path-title h-display">Open a pull request</div>
-        <div class="path-desc">If you've already drafted a SKILL.md. Read the full contribution flow and submit through GitHub directly.</div>
-        <div class="path-cta mono">Read the rules →</div>
-      </a>
+  <div class="contribute-root">
+    {/* Header */}
+    <div class="contribute-header">
+      <div class="mono eyebrow">contribute</div>
+      <h1 class="h-display contribute-title">Share a prompt that worked.</h1>
+      <p class="contribute-sub">
+        You spent two hours coaching ChatGPT through a case prep, a marketing brief, an ops framework. Three quick questions and 79 classmates can run the same thing in 30 seconds.
+      </p>
     </div>
 
-    <p class="back">
-      <a href={baseUrl + '/'}>← Back to all skills</a>
-    </p>
-  </article>
+    {/* Stepper */}
+    <div class="stepper" id="stepper">
+      <div class="stepper-item" data-step-index="0">
+        <div class="stepper-circle">
+          <span class="stepper-num">1</span>
+          <svg class="stepper-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </div>
+        <div class="mono stepper-label">What it does</div>
+      </div>
+      <div class="stepper-line" data-line-index="0"></div>
+      <div class="stepper-item" data-step-index="1">
+        <div class="stepper-circle">
+          <span class="stepper-num">2</span>
+          <svg class="stepper-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </div>
+        <div class="mono stepper-label">How to use it</div>
+      </div>
+      <div class="stepper-line" data-line-index="1"></div>
+      <div class="stepper-item" data-step-index="2">
+        <div class="stepper-circle">
+          <span class="stepper-num">3</span>
+          <svg class="stepper-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </div>
+        <div class="mono stepper-label">You &amp; submit</div>
+      </div>
+    </div>
+
+    {/* Body card */}
+    <div class="card-wrap">
+      <div class="card contribute-card">
+
+        {/* STEP 0 */}
+        <div class="step-panel" data-step="0">
+          <h2 class="h-display step-heading">What does it do?</h2>
+          <p class="step-eyebrow">Imagine you’re explaining it to a classmate over lunch.</p>
+
+          <div class="field">
+            <div class="h-sans field-label">A short name</div>
+            <div class="field-hint">Short, descriptive. Like a recipe name.</div>
+            <input type="text" class="form-input" id="f-title" maxlength="60" placeholder="WACC stress-tester" />
+          </div>
+
+          <div class="field">
+            <div class="h-sans field-label">Describe it in one sentence</div>
+            <div class="field-hint">One sentence. What does this skill do for the person using it?</div>
+            <textarea class="form-input form-textarea" id="f-summary" maxlength="200" style="min-height: 80px;" placeholder="Pressure-tests my WACC calculation against industry benchmarks and flags assumptions that won’t survive office hours."></textarea>
+            <div class="char-count"><span id="f-summary-count">0</span> / 200</div>
+          </div>
+
+          <div class="field field-last">
+            <div class="h-sans field-label">What’s it about?</div>
+            <div class="cat-row" id="cat-row">
+              {categories.map((c) => (
+                <button type="button" class="cat-chip" data-slug={c.slug}>{c.title}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* STEP 1 */}
+        <div class="step-panel" data-step="1" style="display: none;">
+          <h2 class="h-display step-heading">How do you use it?</h2>
+          <p class="step-eyebrow">Paste in what actually worked for you. We’ll format it nicely.</p>
+
+          <div class="field">
+            <div class="h-sans field-label">What do you say to start it?</div>
+            <div class="field-hint">What do you type to kick this off? One per line. We’ll use these so the AI knows when to apply your skill.</div>
+            <textarea class="form-input form-textarea" id="f-startPhrases" style="min-height: 90px;" placeholder={"calculate WACC for...\nreview my cost of capital\ncheck my discount rate"}></textarea>
+          </div>
+
+          <div class="field field-gap-lg">
+            <div class="h-sans field-label">What instructions do you give the AI?</div>
+            <div class="field-hint">The actual prompt or instructions you give the AI. Just paste what worked.</div>
+            <textarea class="form-input form-textarea" id="f-instructions" style="min-height: 180px;" placeholder={"Step 1: Ask me for the company name and my inputs (beta, risk-free rate, equity risk premium, D/E ratio).\nStep 2: Cross-check my beta against three industry comps.\nStep 3: Flag any assumptions that look thin.\nStep 4: Return a markdown table with the WACC, the flags, and 3 followup questions."}></textarea>
+          </div>
+
+          <div class="example-box">
+            <div class="h-sans example-title">Show one example</div>
+            <p class="example-sub">This is the most important part. Pick one real time you used this and paste it in.</p>
+
+            <div class="field">
+              <div class="h-sans field-label">What you typed</div>
+              <textarea class="form-input form-textarea" id="f-exampleInput" style="min-height: 70px;" placeholder="Calculate WACC for Tesla — beta 1.8, Rf 4.2%, ERP 5%, D/E ratio 0.15"></textarea>
+            </div>
+
+            <div class="field field-last">
+              <div class="h-sans field-label">What the AI gave back</div>
+              <textarea class="form-input form-textarea" id="f-exampleOutput" style="min-height: 110px;" placeholder="WACC = 9.4%. Flagged: your beta (1.8) is well above industry median (1.6) — confirm whether you want levered or unlevered. Suggested sensitivity range: 8.6% – 10.3%. Three followups about capital structure assumptions..."></textarea>
+            </div>
+          </div>
+
+          <button type="button" class="advanced-toggle" id="advanced-toggle">
+            <span id="advanced-toggle-icon">+</span> Optional: extra details
+          </button>
+          <div class="advanced-panel" id="advanced-panel" style="display: none;">
+            <div class="field">
+              <div class="h-sans field-label">When NOT to use it</div>
+              <div class="field-hint">If there are situations where the AI shouldn’t use this skill, mention them.</div>
+              <textarea class="form-input form-textarea" id="f-avoidWhen" style="min-height: 70px;" placeholder="Don’t use for general capital-structure theory questions. Needs concrete inputs."></textarea>
+            </div>
+            <div class="field field-last">
+              <div class="h-sans field-label">Notes</div>
+              <div class="field-hint">Anything else the cohort should know? Edge cases, caveats, ideas for improvements.</div>
+              <textarea class="form-input form-textarea" id="f-notes" style="min-height: 70px;"></textarea>
+            </div>
+          </div>
+        </div>
+
+        {/* STEP 2 */}
+        <div class="step-panel" data-step="2" style="display: none;">
+          <h2 class="h-display step-heading">One last thing.</h2>
+          <p class="step-eyebrow">So classmates know who to thank.</p>
+
+          <div class="field">
+            <div class="h-sans field-label">Your name or handle</div>
+            <input type="text" class="form-input" id="f-author" placeholder="Maya R. — or @maya" />
+          </div>
+
+          <div class="field">
+            <div class="h-sans field-label">What did you use this for? <span class="optional-tag">(optional)</span></div>
+            <div class="field-hint">Optional. Helps reviewers verify it works on real coursework.</div>
+            <input type="text" class="form-input" id="f-usedFor" placeholder="Strategy 601 case prep — used three times this term" />
+          </div>
+
+          <div class="consent-box">
+            <label class="consent-label">
+              <input type="checkbox" id="f-consent" class="consent-checkbox" />
+              <div>
+                <div class="h-sans consent-title">Classmates can use and remix this.</div>
+                <div class="consent-sub">You’re sharing this with GMBA Class 19. Anyone in the cohort can run it, tweak it, and build on it. No private course materials or anyone’s personal data inside.</div>
+              </div>
+            </label>
+          </div>
+
+          <div class="reviewer-note">
+            After you submit, cohort reviewers take a look (usually within 24 hours), make sure it works as described, and add it to the library. You’ll get a WhatsApp message when it’s live.
+          </div>
+        </div>
+
+        {/* STEP 3 — confirmation */}
+        <div class="step-panel" data-step="3" style="display: none;">
+          <div class="done-wrap">
+            <div class="done-check">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <h2 class="h-display done-title">Submitted for review.</h2>
+            <p class="done-sub">
+              Thanks for sharing <span class="done-title-name" id="done-title-name">your skill</span>. Cohort reviewers will give it a quick look-over and ping you on WhatsApp when it goes live — usually within a day.
+            </p>
+            <div class="done-actions">
+              <a href={baseUrl + '/'} class="btn btn-primary done-btn">Browse skills</a>
+              <button type="button" class="btn done-btn" id="submit-another">Submit another</button>
+            </div>
+          </div>
+        </div>
+
+        {/* Nav row */}
+        <div class="nav-row" id="nav-row">
+          <div class="missing-hint" id="missing-hint" style="display: none;">
+            <span class="missing-label">Still needed: </span><span id="missing-text"></span>
+          </div>
+          <div class="nav-buttons">
+            <button type="button" class="btn nav-back" id="nav-back">Back</button>
+            <div class="mono nav-counter" id="nav-counter">Step 1 of 3</div>
+            <button type="button" class="btn btn-accent nav-next" id="nav-next">
+              <span id="nav-next-label">Continue</span>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Power-user escape hatch */}
+      <div class="power-line" id="power-line">
+        Comfortable with GitHub? You can also <a href="https://github.com/refaelach/gmba-class-19-skills/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener" class="power-link">fork the repo</a> and open a pull request directly.
+      </div>
+    </div>
+  </div>
 </Layout>
 
-<style>
-  .placeholder-page {
-    max-width: 880px;
-    margin: 0 auto;
-    padding: 80px 32px 0;
+<script is:inline define:vars={{ categoriesJson: categories, baseUrl }}>
+  // Formspree endpoint — replace with the actual form ID once created at https://formspree.io
+  // Until set, "Submit for review" falls back to a mailto: link to Rafa.
+  const FORMSPREE_ENDPOINT = '';
+  const FALLBACK_EMAIL = 'Rephaell@gmail.com';
+
+  const CATEGORIES = categoriesJson;
+  let currentStep = 0;
+  let showAdvanced = false;
+
+  const form = {
+    title: '',
+    summary: '',
+    category: '',
+    startPhrases: '',
+    instructions: '',
+    exampleInput: '',
+    exampleOutput: '',
+    author: '',
+    usedFor: '',
+    consent: false,
+    avoidWhen: '',
+    notes: '',
+  };
+
+  // ── Helpers ──
+  const $ = (id) => document.getElementById(id);
+  const slugify = (s) =>
+    (s || '')
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .slice(0, 60);
+
+  // ── Validation ──
+  function missingFields() {
+    const miss = [];
+    const v = (s) => (s || '').toString().trim();
+    if (currentStep === 0) {
+      if (!v(form.title)) miss.push('A short name');
+      if (v(form.summary).length < 15) miss.push('A one-sentence description');
+      if (!form.category) miss.push('A category');
+    } else if (currentStep === 1) {
+      if (!v(form.startPhrases)) miss.push('At least one phrase you’d use to start it');
+      if (v(form.instructions).length < 30) miss.push('The instructions you give the AI');
+      if (!v(form.exampleInput)) miss.push('Your example prompt');
+      if (!v(form.exampleOutput)) miss.push('What the AI gave back');
+    } else if (currentStep === 2) {
+      if (!v(form.author)) miss.push('Your name or handle');
+      if (!form.consent) miss.push('The remix-permission checkbox');
+    }
+    return miss;
   }
-  .page-tag {
+  const canAdvance = () => missingFields().length === 0;
+
+  // ── Build SKILL.md ──
+  function buildSkillMd() {
+    const cat = (CATEGORIES.find((c) => c.slug === form.category) || {}).title || form.category;
+    const phrases = form.startPhrases.split('\n').map((s) => s.trim()).filter(Boolean);
+    const triggerLine = phrases.length
+      ? `Triggers: ${phrases.map((p) => `'${p}'`).join(', ')}.`
+      : '';
+    const desc = [form.summary.trim(), triggerLine].filter(Boolean).join(' ');
+    const slug = slugify(form.title);
+
+    return `---
+name: ${slug || 'your-skill'}
+description: "${desc.replace(/"/g, '\\"')}"
+---
+
+# ${form.title || 'Your skill'}
+
+${form.summary || ''}
+
+## When to use this skill
+
+${phrases.length ? phrases.map((p) => `- When the user says something like "${p}"`).join('\n') : '_(none specified)_'}
+${form.avoidWhen ? `\n## When NOT to use this skill\n\n${form.avoidWhen}\n` : ''}
+## Instructions
+
+${form.instructions || ''}
+
+## Example
+
+**User:**
+
+> ${form.exampleInput || ''}
+
+**AI response:**
+
+${form.exampleOutput || ''}
+${form.notes ? `\n## Notes\n\n${form.notes}\n` : ''}
+---
+
+**Author:** ${form.author || ''}
+**Category:** ${cat}
+${form.usedFor ? `**Used for:** ${form.usedFor}\n` : ''}**Submitted:** ${new Date().toISOString().slice(0, 10)}
+**License:** MIT (cohort default)
+`;
+  }
+
+  // ── Render ──
+  function renderSteps() {
+    document.querySelectorAll('.step-panel').forEach((p) => {
+      const idx = Number(p.getAttribute('data-step'));
+      p.style.display = idx === currentStep ? 'block' : 'none';
+    });
+  }
+
+  function renderStepper() {
+    document.querySelectorAll('.stepper-item').forEach((item) => {
+      const idx = Number(item.getAttribute('data-step-index'));
+      item.classList.toggle('is-done', currentStep > idx);
+      item.classList.toggle('is-active', currentStep === idx);
+      item.classList.toggle('is-future', currentStep < idx);
+    });
+    document.querySelectorAll('.stepper-line').forEach((line) => {
+      const idx = Number(line.getAttribute('data-line-index'));
+      line.classList.toggle('is-done', currentStep > idx);
+    });
+    // Hide the stepper on confirmation
+    const stepper = $('stepper');
+    stepper.style.display = currentStep >= 3 ? 'none' : 'flex';
+  }
+
+  function renderCategoryChips() {
+    document.querySelectorAll('.cat-chip').forEach((btn) => {
+      const slug = btn.getAttribute('data-slug');
+      btn.classList.toggle('is-selected', form.category === slug);
+    });
+  }
+
+  function renderNav() {
+    const navRow = $('nav-row');
+    const powerLine = $('power-line');
+    if (currentStep >= 3) {
+      navRow.style.display = 'none';
+      powerLine.style.display = 'none';
+      return;
+    }
+    navRow.style.display = 'block';
+    powerLine.style.display = 'block';
+
+    // Counter
+    $('nav-counter').textContent = `Step ${currentStep + 1} of 3`;
+
+    // Back
+    const back = $('nav-back');
+    if (currentStep === 0) {
+      back.setAttribute('disabled', '');
+      back.classList.add('is-disabled');
+    } else {
+      back.removeAttribute('disabled');
+      back.classList.remove('is-disabled');
+    }
+
+    // Next label
+    $('nav-next-label').textContent = currentStep === 2 ? 'Submit for review' : 'Continue';
+
+    // Validation hints + next-button enabled state
+    const miss = missingFields();
+    const hint = $('missing-hint');
+    if (miss.length > 0) {
+      hint.style.display = 'block';
+      $('missing-text').textContent = miss.join(' · ');
+    } else {
+      hint.style.display = 'none';
+    }
+
+    const next = $('nav-next');
+    if (canAdvance()) {
+      next.removeAttribute('disabled');
+      next.classList.remove('is-disabled');
+    } else {
+      next.setAttribute('disabled', '');
+      next.classList.add('is-disabled');
+    }
+  }
+
+  function renderAll() {
+    renderSteps();
+    renderStepper();
+    renderCategoryChips();
+    renderNav();
+  }
+
+  // ── Form bindings ──
+  function bind(id, key, isCheckbox = false) {
+    const el = $(id);
+    if (!el) return;
+    el.addEventListener('input', () => {
+      form[key] = isCheckbox ? el.checked : el.value;
+      if (key === 'summary') {
+        $('f-summary-count').textContent = String(form.summary.length);
+      }
+      renderNav();
+    });
+    el.addEventListener('change', () => {
+      form[key] = isCheckbox ? el.checked : el.value;
+      renderNav();
+    });
+  }
+
+  bind('f-title', 'title');
+  bind('f-summary', 'summary');
+  bind('f-startPhrases', 'startPhrases');
+  bind('f-instructions', 'instructions');
+  bind('f-exampleInput', 'exampleInput');
+  bind('f-exampleOutput', 'exampleOutput');
+  bind('f-author', 'author');
+  bind('f-usedFor', 'usedFor');
+  bind('f-consent', 'consent', true);
+  bind('f-avoidWhen', 'avoidWhen');
+  bind('f-notes', 'notes');
+
+  // Category chips
+  document.querySelectorAll('.cat-chip').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      form.category = btn.getAttribute('data-slug') || '';
+      renderCategoryChips();
+      renderNav();
+    });
+  });
+
+  // Advanced toggle
+  $('advanced-toggle').addEventListener('click', () => {
+    showAdvanced = !showAdvanced;
+    $('advanced-panel').style.display = showAdvanced ? 'block' : 'none';
+    $('advanced-toggle-icon').textContent = showAdvanced ? '−' : '+';
+  });
+
+  // Back
+  $('nav-back').addEventListener('click', () => {
+    if (currentStep === 0) return;
+    currentStep -= 1;
+    renderAll();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // Next / Submit
+  $('nav-next').addEventListener('click', async () => {
+    if (!canAdvance()) return;
+    if (currentStep === 2) {
+      await handleSubmit();
+      return;
+    }
+    currentStep += 1;
+    renderAll();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  function goToConfirmation() {
+    $('done-title-name').textContent = form.title || 'your skill';
+    currentStep = 3;
+    renderAll();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function openMailto(skillMd) {
+    const subject = `New skill submission: ${form.title}`;
+    const url = `mailto:${FALLBACK_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(skillMd)}`;
+    window.open(url, '_blank');
+  }
+
+  async function handleSubmit() {
+    const skillMd = buildSkillMd();
+    const subject = `New skill submission: ${form.title}`;
+
+    if (FORMSPREE_ENDPOINT && FORMSPREE_ENDPOINT.length > 0) {
+      try {
+        const body = new URLSearchParams();
+        body.set('_subject', subject);
+        body.set('name', form.author);
+        body.set('email', '');
+        body.set('category', form.category);
+        body.set('title', form.title);
+        body.set('summary', form.summary);
+        body.set('message', skillMd);
+
+        const res = await fetch(FORMSPREE_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: body.toString(),
+        });
+        if (res.ok) {
+          goToConfirmation();
+          return;
+        }
+        // Soft error — fall back to mailto
+        showSoftError("Couldn't submit right now — opening email instead");
+        openMailto(skillMd);
+        goToConfirmation();
+      } catch (err) {
+        showSoftError("Couldn't submit right now — opening email instead");
+        openMailto(skillMd);
+        goToConfirmation();
+      }
+    } else {
+      // No Formspree configured — mailto fallback
+      openMailto(skillMd);
+      goToConfirmation();
+    }
+  }
+
+  function showSoftError(msg) {
+    const hint = $('missing-hint');
+    hint.style.display = 'block';
+    hint.innerHTML = `<span class="missing-label">Heads up: </span>${msg}`;
+    setTimeout(() => {
+      // Restore validation hint behavior on next render
+      renderNav();
+    }, 4000);
+  }
+
+  // Submit another → reset
+  $('submit-another').addEventListener('click', () => {
+    const keepAuthor = form.author;
+    form.title = '';
+    form.summary = '';
+    form.category = '';
+    form.startPhrases = '';
+    form.instructions = '';
+    form.exampleInput = '';
+    form.exampleOutput = '';
+    form.author = keepAuthor;
+    form.usedFor = '';
+    form.consent = false;
+    form.avoidWhen = '';
+    form.notes = '';
+    showAdvanced = false;
+    $('advanced-panel').style.display = 'none';
+    $('advanced-toggle-icon').textContent = '+';
+
+    // Reset DOM inputs
+    ['f-title','f-summary','f-startPhrases','f-instructions','f-exampleInput','f-exampleOutput','f-usedFor','f-avoidWhen','f-notes'].forEach((id) => {
+      const el = $(id);
+      if (el) el.value = '';
+    });
+    const author = $('f-author');
+    if (author) author.value = keepAuthor;
+    const consent = $('f-consent');
+    if (consent) consent.checked = false;
+    $('f-summary-count').textContent = '0';
+
+    currentStep = 0;
+    renderAll();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // Initial render
+  renderAll();
+</script>
+
+<style>
+  .contribute-root {
+    padding-bottom: 60px;
+  }
+  .contribute-header {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 40px 32px 0;
+  }
+  .eyebrow {
+    font-size: 12px;
+    color: var(--ink-3);
+    margin-bottom: 20px;
+  }
+  .contribute-title {
+    font-size: clamp(34px, 4.4vw, 48px);
+    margin: 0;
+    line-height: 1.1;
+  }
+  .contribute-sub {
+    font-size: 17px;
+    line-height: 1.55;
+    color: var(--ink-2);
+    margin: 18px 0 0;
+    max-width: 600px;
+  }
+
+  /* Stepper */
+  .stepper {
+    max-width: 720px;
+    margin: 36px auto 0;
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+  }
+  .stepper-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .stepper-item.is-future {
+    opacity: 0.45;
+  }
+  .stepper-circle {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--bg-elev);
+    color: var(--ink-3);
+    border: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .stepper-item.is-active .stepper-circle {
+    background: var(--ink);
+    color: #fff;
+    border: none;
+  }
+  .stepper-item.is-done .stepper-circle {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+  }
+  .stepper-num { display: inline; }
+  .stepper-check { display: none; }
+  .stepper-item.is-done .stepper-num { display: none; }
+  .stepper-item.is-done .stepper-check { display: inline; }
+  .stepper-label {
     font-size: 11px;
     color: var(--ink-3);
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-bottom: 16px;
+    letter-spacing: 0.05em;
   }
-  h1 {
-    font-size: clamp(34px, 4.4vw, 48px);
-    margin: 0 0 24px;
-    font-weight: 500;
-    line-height: 1.08;
-  }
-  p {
-    font-size: 17px;
-    line-height: 1.65;
-    color: var(--ink-2);
-    margin: 0 0 18px;
-    max-width: 640px;
-  }
-  .path-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 14px;
-    margin: 32px 0 32px;
-  }
-  .path-card {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding: 22px;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    background: var(--bg);
-    color: var(--ink);
-    text-decoration: none;
-    transition: border-color 0.15s, transform 0.15s;
-  }
-  .path-card:hover {
-    border-color: var(--ink-3);
-    transform: translateY(-1px);
-  }
-  .path-title {
-    font-size: 17px;
-    font-weight: 500;
-  }
-  .path-desc {
-    font-size: 13.5px;
-    color: var(--ink-2);
-    line-height: 1.55;
+  .stepper-item.is-active .stepper-label { color: var(--ink); }
+  .stepper-line {
     flex: 1;
+    height: 1px;
+    min-width: 12px;
+    background: var(--line);
+    margin: 0 14px;
   }
-  .path-cta {
-    font-size: 11px;
-    color: var(--accent);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin-top: 4px;
+  .stepper-line.is-done { background: var(--accent); }
+
+  /* Card wrap */
+  .card-wrap {
+    max-width: 720px;
+    margin: 32px auto 0;
+    padding: 0 32px;
   }
-  .back {
-    margin-top: 16px;
+  .contribute-card {
+    padding: 36px;
   }
-  .back a {
+
+  /* Step heading */
+  .step-heading {
+    font-size: 26px;
+    margin: 0;
+  }
+  .step-eyebrow {
+    font-size: 14px;
+    color: var(--ink-3);
+    margin: 6px 0 28px;
+  }
+
+  /* Fields */
+  .field { margin-bottom: 22px; }
+  .field-gap-lg { margin-bottom: 28px; }
+  .field-last { margin-bottom: 0; }
+  .field-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+  .field-hint {
     font-size: 13px;
     color: var(--ink-3);
+    margin-bottom: 10px;
+    line-height: 1.5;
+  }
+  .optional-tag {
+    color: var(--ink-4);
+    font-weight: 400;
+  }
+
+  /* Inputs */
+  .form-input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--ink);
+    font: inherit;
+    font-size: 15px;
+    font-family: inherit;
+    outline: none;
+  }
+  .form-input:focus {
+    border-color: var(--accent);
+  }
+  .form-textarea {
+    line-height: 1.6;
+    resize: vertical;
+  }
+  .char-count {
+    margin-top: 6px;
+    font-size: 11px;
+    color: var(--ink-4);
+    text-align: right;
+  }
+
+  /* Category chips */
+  .cat-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .cat-chip {
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--ink-2);
+    cursor: pointer;
+    font: inherit;
+  }
+  .cat-chip.is-selected {
+    border: 1.5px solid var(--accent);
+    background: var(--accent-tint);
+    color: var(--accent);
+  }
+
+  /* Example box */
+  .example-box {
+    padding: 20px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--bg-elev);
+    margin-bottom: 12px;
+  }
+  .example-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .example-sub {
+    font-size: 13px;
+    color: var(--ink-3);
+    margin: 0 0 18px;
+    line-height: 1.5;
+  }
+
+  /* Advanced toggle */
+  .advanced-toggle {
+    margin-top: 8px;
+    background: transparent;
+    border: none;
+    color: var(--ink-3);
+    font-size: 13px;
+    cursor: pointer;
+    padding: 0;
+    font: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .advanced-panel {
+    margin-top: 16px;
+    padding-left: 14px;
+    border-left: 2px solid var(--line);
+  }
+
+  /* Consent */
+  .consent-box {
+    margin-bottom: 18px;
+    padding: 16px 20px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--bg-elev);
+  }
+  .consent-label {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    cursor: pointer;
+  }
+  .consent-checkbox {
+    margin-top: 4px;
+  }
+  .consent-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink);
+  }
+  .consent-sub {
+    font-size: 13px;
+    color: var(--ink-2);
+    margin-top: 4px;
+    line-height: 1.5;
+  }
+  .reviewer-note {
+    padding: 14px 18px;
+    font-size: 13px;
+    color: var(--ink-3);
+    line-height: 1.55;
+  }
+
+  /* Done */
+  .done-wrap {
+    text-align: center;
+    padding: 40px 0;
+  }
+  .done-check {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+  }
+  .done-title {
+    font-size: 30px;
+    margin: 0;
+  }
+  .done-sub {
+    font-size: 16px;
+    color: var(--ink-2);
+    margin: 12px auto 0;
+    max-width: 460px;
+    line-height: 1.6;
+  }
+  .done-title-name {
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .done-actions {
+    margin-top: 28px;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .done-btn {
+    height: 44px;
+    font-size: 15px;
+    padding: 0 22px;
     text-decoration: none;
   }
-  .back a:hover { color: var(--ink); }
+
+  /* Nav */
+  .nav-row {
+    margin-top: 32px;
+    padding-top: 22px;
+    border-top: 1px solid var(--line);
+  }
+  .missing-hint {
+    margin-bottom: 14px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    background: var(--bg-elev);
+    border: 1px solid var(--line);
+    font-size: 12.5px;
+    color: var(--ink-2);
+    line-height: 1.55;
+  }
+  .missing-label { color: var(--ink-3); }
+  .nav-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .nav-back {
+    height: 42px;
+    padding: 0 18px;
+    font-size: 14px;
+  }
+  .nav-back.is-disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+  .nav-counter {
+    font-size: 11px;
+    color: var(--ink-4);
+  }
+  .nav-next {
+    height: 42px;
+    padding: 0 22px;
+    font-size: 14px;
+  }
+  .nav-next.is-disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  /* Power line */
+  .power-line {
+    margin-top: 24px;
+    padding: 0 4px;
+    color: var(--ink-4);
+    font-size: 12.5px;
+    line-height: 1.55;
+    text-align: center;
+  }
+  .power-link {
+    color: var(--ink-3);
+    text-decoration: underline;
+  }
+  .power-link:hover { color: var(--accent); }
 
   @media (max-width: 720px) {
-    .placeholder-page { padding: 56px 20px 0; }
+    .contribute-header { padding: 32px 20px 0; }
+    .stepper { padding: 0 20px; }
+    .card-wrap { padding: 0 20px; }
+    .contribute-card { padding: 24px; }
+    .stepper-label { display: none; }
   }
 </style>
