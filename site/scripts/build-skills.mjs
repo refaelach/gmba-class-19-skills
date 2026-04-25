@@ -398,13 +398,10 @@ function parseFooter(footerText) {
 // partial / prompt-only / Custom-GPT support, narrow to the two with full
 // support (Claude / Codex).
 function deriveTools(_rawCompatibility, _renderedCompatibility) {
-  // Every skill in the repo works in all four tools via copy-paste at minimum.
-  // The Compatibility section calls out polish gradations (e.g., "partial on
-  // prompt-only"), not "doesn't work elsewhere" — so we always show the full
-  // four-tool set. If a skill genuinely depends on tool-specific features that
-  // make it unusable elsewhere, we'd encode that as a frontmatter field rather
-  // than scraping the Compatibility prose.
-  return ['Claude', 'ChatGPT', 'Gemini', 'Codex'];
+  // Every skill works via copy-paste in the three consumer AI tools at minimum.
+  // We display brand icons for these three. Codex / Cursor / Claude Code etc.
+  // are surfaced separately in the "Power users" block on the skill detail page.
+  return ['Claude', 'ChatGPT', 'Gemini'];
 }
 
 // Derive a short display string from a "Tested on" footer value.
