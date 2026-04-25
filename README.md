@@ -61,6 +61,9 @@ If a specific skill in this repo relies on tool-specific features (sub-agents, f
 ### Decision-Making
 - **[llm-council](./skills/decision-making/llm-council)** — Run any decision through a council of 5 AI advisors who independently analyze it, peer-review each other anonymously, and synthesize a final verdict. Based on Andrej Karpathy's LLM Council methodology. *Full experience on tools that support sub-agents (Claude Code, Codex). Runs sequentially on others.*
 
+### Exam Prep
+- **[exam-prep](./skills/exam-prep/exam-prep)** — Turn one or more past exams into a realistic mock exam that mirrors the real one's question types, structure, point distribution, and phrasing style. Withholds answers until the student submits, so it works as actual practice instead of read-along review. Surfaces topics that repeat across years as high-yield. Works on PDFs, images, or pasted text.
+
 *More coming. This is just the start.*
 
 ## Contributing
