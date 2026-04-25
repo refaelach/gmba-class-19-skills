@@ -53,7 +53,10 @@ const searchPayload = skills.map((s) => ({
   triggers: [...(s.triggers?.mandatory || []), ...(s.triggers?.strong || [])],
 }));
 
-// Categories with counts, hide empty.
+// Show all categories on the home page, including empty ones — surfaces the
+// full taxonomy and creates a visible "this slot is open, contribute here"
+// signal for the cohort. Empty tiles render dimmed and aren't clickable.
+const allCategories = categories;
 const populatedCategories = categories.filter((c) => c.skillCount > 0);
 
 // Sort skills alphabetically for the All-skills grid.
@@ -104,34 +107,43 @@ const recentSkills = [...skillRows]
     </div>
   </section>
 
-  {populatedCategories.length > 0 && (
-    <section class="page-section">
-      <div class="container">
-        <div class="section-head">
-          <h2 class="section-label">Categories</h2>
-          <span class="section-meta mono">
-            {skills.length} skill{skills.length === 1 ? '' : 's'} · {populatedCategories.length} categor{populatedCategories.length === 1 ? 'y' : 'ies'}
-          </span>
-        </div>
-        <div class="cat-tile-grid">
-          {populatedCategories.map((c) => (
-            <button
-              class="cat-tile"
-              data-cat-slug={c.slug}
-              data-cat-name={c.title}
+  <section class="page-section">
+    <div class="container">
+      <div class="section-head">
+        <h2 class="section-label">Categories</h2>
+        <span class="section-meta mono">
+          {skills.length} skill{skills.length === 1 ? '' : 's'} · {allCategories.length} categories
+        </span>
+      </div>
+      <div class="cat-tile-grid">
+        {allCategories.map((c) => {
+          const isEmpty = c.skillCount === 0;
+          const Tag = isEmpty ? 'div' : 'button';
+          return (
+            <Tag
+              class:list={['cat-tile', isEmpty && 'cat-tile-empty']}
+              data-cat-slug={isEmpty ? undefined : c.slug}
+              data-cat-name={isEmpty ? undefined : c.title}
             >
               <div class="cat-tile-top">
                 <span class="mono cat-tile-slug">{c.slug}</span>
-                <span class="mono cat-tile-count">{String(c.skillCount).padStart(2, '0')}</span>
+                <span class="mono cat-tile-count">
+                  {isEmpty ? 'empty' : String(c.skillCount).padStart(2, '0')}
+                </span>
               </div>
               <div class="cat-tile-name h-display">{c.title}</div>
               <div class="cat-tile-desc">{c.description}</div>
-            </button>
-          ))}
-        </div>
+              {isEmpty && (
+                <div class="cat-tile-empty-cta mono">
+                  <a href={`${baseUrl}/contribute`}>Be the first → contribute</a>
+                </div>
+              )}
+            </Tag>
+          );
+        })}
       </div>
-    </section>
-  )}
+    </div>
+  </section>
 
   <section class="page-section" id="all-skills">
     <div class="container">
@@ -424,6 +436,22 @@ const recentSkills = [...skillRows]
     transition: background 120ms;
   }
   .cat-tile:hover { background: var(--bg-sunken); }
+  .cat-tile-empty {
+    cursor: default;
+    background: var(--bg-elev);
+    opacity: 0.62;
+  }
+  .cat-tile-empty:hover { background: var(--bg-elev); }
+  .cat-tile-empty-cta {
+    margin-top: auto;
+    font-size: 11px;
+    padding-top: 2px;
+  }
+  .cat-tile-empty-cta a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .cat-tile-empty-cta a:hover { text-decoration: underline; }
   .cat-tile-top {
     display: flex;
     align-items: center;

@@ -1,5 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import ToolIcon from '../../components/ToolIcon.astro';
 import skillsData from '../../data/skills.json';
 import categoriesData from '../../data/categories.json';
 
@@ -64,18 +65,26 @@ const githubEditUrl = `${repoUrl}/edit/main/${skill.githubPath}`;
 const githubIssueUrl = `${repoUrl}/issues/new?title=${encodeURIComponent('[' + skill.slug + '] ')}`;
 
 // Section render order — only render the ones present.
-const sectionOrder: { key: string; label: string }[] = [
-  { key: 'compatibility', label: 'Compatibility' },
+// Sections shown by default — what a student needs to decide whether to use the skill.
+const visibleSections: { key: string; label: string }[] = [
   { key: 'whenToUse', label: 'When to use this skill' },
   { key: 'whenNotToUse', label: 'When NOT to use this skill' },
-  { key: 'howItWorks', label: 'How it works' },
   { key: 'example', label: 'Example' },
   { key: 'inputs', label: 'Inputs' },
   { key: 'outputs', label: 'Outputs' },
+];
+
+// Sections collapsed by default — implementation details for the AI agent and
+// for contributors. Useful but not what a student needs at first glance.
+const collapsedSections: { key: string; label: string }[] = [
+  { key: 'compatibility', label: 'Compatibility' },
+  { key: 'howItWorks', label: 'How it works' },
   { key: 'notesForContributors', label: 'Notes for contributors' },
 ];
 
-const tools = skill.tools && skill.tools.length ? skill.tools : ['Claude', 'ChatGPT', 'Gemini', 'Codex'];
+const hasCollapsedContent = collapsedSections.some((s) => skill.sections[s.key]);
+
+const tools = skill.tools && skill.tools.length ? skill.tools : ['Claude', 'ChatGPT', 'Gemini'];
 const testedShort = skill.testedShort || skill.footer?.testedOn || '';
 
 const pasteTargets = [
@@ -114,8 +123,10 @@ const pasteTargets = [
           <div class="meta-tools">
             <span>Tools</span>
             <div class="tool-dot-row">
-              {tools.slice(0, 4).map((t) => (
-                <span class="tool-dot" title={t}>{t.charAt(0).toUpperCase()}</span>
+              {tools.slice(0, 3).map((t) => (
+                <span class="tool-dot" title={t}>
+                  <ToolIcon name={t} size={14} />
+                </span>
               ))}
             </div>
           </div>
@@ -124,7 +135,7 @@ const pasteTargets = [
 
       <div class="skill-grid">
         <article class="md skill-body">
-          {sectionOrder.map(({ key, label }) =>
+          {visibleSections.map(({ key, label }) =>
             skill.sections[key] ? (
               <>
                 <h2>{label}</h2>
@@ -163,6 +174,25 @@ const pasteTargets = [
                 </div>
               )}
             </>
+          )}
+
+          {hasCollapsedContent && (
+            <details class="impl-details">
+              <summary>
+                <span class="mono impl-summary-label">Implementation details</span>
+                <span class="impl-summary-hint">— for the AI agent &amp; future contributors</span>
+              </summary>
+              <div class="impl-body">
+                {collapsedSections.map(({ key, label }) =>
+                  skill.sections[key] ? (
+                    <>
+                      <h2>{label}</h2>
+                      <Fragment set:html={skill.sections[key] || ''} />
+                    </>
+                  ) : null
+                )}
+              </div>
+            </details>
           )}
 
           <h2>Source</h2>
@@ -388,9 +418,42 @@ const pasteTargets = [
     border-radius: 4px;
     background: var(--bg-sunken);
     border: 1px solid var(--line-2);
+    color: var(--ink-2);
+  }
+
+  /* Implementation-details collapsible */
+  .impl-details {
+    margin: 32px 0;
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+    padding: 0;
+  }
+  .impl-details summary {
+    padding: 14px 18px;
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
     color: var(--ink-3);
-    font-family: 'JetBrains Mono', monospace;
+  }
+  .impl-details summary::-webkit-details-marker { display: none; }
+  .impl-details summary:hover { color: var(--ink); }
+  .impl-summary-label {
     font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .impl-summary-hint {
+    font-size: 13px;
+    color: var(--ink-4);
+  }
+  .impl-details[open] summary {
+    border-bottom: 1px dashed var(--line);
+  }
+  .impl-body {
+    padding: 0 18px 18px;
   }
 
   /* Two-column body / sidebar */
