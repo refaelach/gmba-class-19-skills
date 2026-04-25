@@ -136,5 +136,5 @@ If the student wants more practice on a weak area, offer to generate a focused d
 
 **Author:** Refael (Rafa) Lachmish ([@refaelach](https://github.com/refaelach))
 **Created:** 2026-04-25
-**Tested on:** Claude Sonnet 4.6, Claude Opus 4.7
-**Real tasks tested:** Generating mock finals from 2–3 years of past Corporate Finance and Strategy exams; generating a single-section drill from one past midterm.
+**Tested on:** Claude (Opus 4.7)
+**Real tasks tested:** Uploaded a past Statistics exam and asked the skill to generate practice questions. The skill detected the question types in the original exam and produced custom practice questions that matched those types.
