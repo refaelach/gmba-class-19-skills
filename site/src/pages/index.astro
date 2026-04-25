@@ -1,0 +1,369 @@
+---
+import Layout from '../layouts/Layout.astro';
+import SkillCard from '../components/SkillCard.astro';
+import skillsData from '../data/skills.json';
+import categoriesData from '../data/categories.json';
+
+type Skill = {
+  slug: string;
+  category: string;
+  title: string;
+  summaryLine: string;
+  footer?: { authorHandle?: string };
+};
+
+type Category = { slug: string; title: string; description: string; skillCount: number };
+
+const skills = skillsData as Skill[];
+const categories = categoriesData as Category[];
+
+const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+// Build a count per category to hide empty ones
+const counts: Record<string, number> = {};
+for (const s of skills) counts[s.category] = (counts[s.category] || 0) + 1;
+const populatedCategories = categories.filter((c) => counts[c.slug] > 0);
+
+// Resolve category display name
+const categoryName = (slug: string) =>
+  categories.find((c) => c.slug === slug)?.title || slug;
+
+// Sort skills by title for stable display
+const sortedSkills = [...skills].sort((a, b) => a.title.localeCompare(b.title));
+---
+<Layout title="Browse skills · GMBA Class 19">
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-tag mono">For Class 19, by Class 19</div>
+      <h1 class="hero-title h-display">Pre-built AI guides for the courses we're actually taking.</h1>
+      <p class="hero-sub">
+        Pick a skill, paste it into ChatGPT or Claude, get sharper answers.
+        Built by classmates from prompts that worked. Open source — fork, use,
+        contribute back.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-accent" href={`${baseUrl}/how-to-use`}>How to use a skill</a>
+        <a class="btn" href={`${baseUrl}/contribute`}>Share one of yours</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="search-strip">
+    <div class="search-inner">
+      <input
+        id="skill-search"
+        type="search"
+        placeholder="Search by name, topic, or category…"
+        autocomplete="off"
+        aria-label="Search skills"
+      />
+      <div class="search-meta mono" id="skill-count">
+        {skills.length} skill{skills.length === 1 ? '' : 's'}
+      </div>
+    </div>
+  </section>
+
+  {populatedCategories.length > 0 && (
+    <section class="page-section" id="categories-section">
+      <div class="section-head">
+        <h2 class="section-title h-display">Categories</h2>
+      </div>
+      <div class="cat-grid">
+        {populatedCategories.map((c) => (
+          <a class="cat-card" href={`#cat-${c.slug}`} data-cat-link={c.slug}>
+            <div class="cat-name h-display">{c.title}</div>
+            <div class="cat-desc">{c.description}</div>
+            <div class="cat-count mono">
+              {counts[c.slug]} skill{counts[c.slug] === 1 ? '' : 's'}
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+  )}
+
+  <section class="page-section" id="all-skills-section">
+    <div class="section-head">
+      <h2 class="section-title h-display">All skills</h2>
+      <div class="section-meta mono" id="empty-state-msg" style="display: none;">
+        No skills match your search. Try a different term or
+        <a href="#" id="clear-search">clear the filter</a>.
+      </div>
+    </div>
+
+    {populatedCategories.map((c) => (
+      <div class="cat-section" id={`cat-${c.slug}`} data-cat-section={c.slug}>
+        <div class="cat-section-head">
+          <span class="cat-section-name mono">{c.title.toUpperCase()}</span>
+          <span class="cat-section-line"></span>
+        </div>
+        <div class="skill-grid">
+          {sortedSkills
+            .filter((s) => s.category === c.slug)
+            .map((s) => (
+              <div
+                class="skill-card-wrap"
+                data-skill-card
+                data-title={s.title.toLowerCase()}
+                data-summary={s.summaryLine.toLowerCase()}
+                data-category={c.title.toLowerCase()}
+                data-slug={s.slug.toLowerCase()}
+              >
+                <SkillCard
+                  slug={s.slug}
+                  category={s.category}
+                  categoryName={c.title}
+                  title={s.title}
+                  summary={s.summaryLine}
+                  author={s.footer?.authorHandle}
+                />
+              </div>
+            ))}
+        </div>
+      </div>
+    ))}
+
+    {skills.length === 0 && (
+      <div class="empty-state">
+        <p>No skills yet. Be the first —</p>
+        <a class="btn btn-accent" href={`${baseUrl}/contribute`}>Share a skill</a>
+      </div>
+    )}
+  </section>
+</Layout>
+
+<script>
+  // Live filter — substring match across title, summary, category, slug.
+  const input = document.getElementById('skill-search') as HTMLInputElement | null;
+  const cards = Array.from(document.querySelectorAll('[data-skill-card]')) as HTMLElement[];
+  const catSections = Array.from(document.querySelectorAll('[data-cat-section]')) as HTMLElement[];
+  const countEl = document.getElementById('skill-count');
+  const emptyMsg = document.getElementById('empty-state-msg');
+  const clearLink = document.getElementById('clear-search');
+
+  const total = cards.length;
+
+  function applyFilter(query: string) {
+    const q = query.trim().toLowerCase();
+    let visible = 0;
+
+    for (const card of cards) {
+      const hay = [
+        card.dataset.title || '',
+        card.dataset.summary || '',
+        card.dataset.category || '',
+        card.dataset.slug || '',
+      ].join(' ');
+      const show = !q || hay.includes(q);
+      card.style.display = show ? '' : 'none';
+      if (show) visible++;
+    }
+
+    // Hide empty category sections in filter mode
+    for (const section of catSections) {
+      const hasVisible = section.querySelector('[data-skill-card]:not([style*="none"])');
+      section.style.display = hasVisible ? '' : 'none';
+    }
+
+    if (countEl) {
+      countEl.textContent = q
+        ? `${visible} of ${total} skill${total === 1 ? '' : 's'}`
+        : `${total} skill${total === 1 ? '' : 's'}`;
+    }
+    if (emptyMsg) emptyMsg.style.display = visible === 0 && q ? '' : 'none';
+  }
+
+  if (input) {
+    input.addEventListener('input', (e) => applyFilter((e.target as HTMLInputElement).value));
+  }
+  if (clearLink) {
+    clearLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (input) {
+        input.value = '';
+        applyFilter('');
+        input.focus();
+      }
+    });
+  }
+</script>
+
+<style>
+  .hero {
+    border-bottom: 1px solid var(--line);
+  }
+  .hero-inner {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 80px 32px 64px;
+  }
+  .hero-tag {
+    font-size: 11px;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 18px;
+  }
+  .hero-title {
+    font-size: clamp(34px, 4.6vw, 52px);
+    line-height: 1.06;
+    margin: 0;
+    font-weight: 500;
+  }
+  .hero-sub {
+    margin: 22px 0 0;
+    font-size: 17px;
+    line-height: 1.55;
+    color: var(--ink-2);
+    max-width: 640px;
+  }
+  .hero-actions {
+    margin-top: 28px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .search-strip {
+    border-bottom: 1px solid var(--line);
+    background: var(--bg);
+    position: sticky;
+    top: 60px;
+    z-index: 20;
+  }
+  .search-inner {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  #skill-search {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--ink);
+    font: inherit;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  #skill-search:focus {
+    border-color: var(--ink-3);
+  }
+  .search-meta {
+    font-size: 11px;
+    color: var(--ink-3);
+    white-space: nowrap;
+  }
+
+  .page-section {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 56px 32px 0;
+  }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .section-title {
+    font-size: 24px;
+    font-weight: 500;
+    margin: 0;
+  }
+  .section-meta {
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+  .section-meta a {
+    color: var(--accent);
+    text-decoration: underline;
+  }
+
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+  }
+  .cat-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 22px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--bg);
+    color: var(--ink);
+    text-decoration: none;
+    transition: border-color 0.15s, transform 0.15s;
+  }
+  .cat-card:hover {
+    border-color: var(--ink-3);
+    transform: translateY(-1px);
+  }
+  .cat-name {
+    font-size: 18px;
+    font-weight: 500;
+  }
+  .cat-desc {
+    font-size: 13.5px;
+    color: var(--ink-2);
+    line-height: 1.55;
+    flex: 1;
+  }
+  .cat-count {
+    font-size: 11px;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .cat-section {
+    margin-bottom: 48px;
+  }
+  .cat-section:last-child {
+    margin-bottom: 0;
+  }
+  .cat-section-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+  .cat-section-name {
+    font-size: 11px;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .cat-section-line {
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+  }
+  .skill-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+  }
+
+  .empty-state {
+    padding: 60px 0;
+    text-align: center;
+    color: var(--ink-3);
+  }
+  .empty-state .btn {
+    margin-top: 16px;
+  }
+
+  @media (max-width: 720px) {
+    .hero-inner { padding: 56px 20px 40px; }
+    .page-section { padding: 40px 20px 0; }
+    .search-inner { padding: 12px 20px; }
+  }
+</style>

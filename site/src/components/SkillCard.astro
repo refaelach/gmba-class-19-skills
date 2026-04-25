@@ -1,0 +1,73 @@
+---
+interface Props {
+  slug: string;
+  category: string;
+  categoryName: string;
+  title: string;
+  summary: string;
+  author?: string;
+}
+
+const { slug, category, categoryName, title, summary, author } = Astro.props;
+const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
+const href = `${baseUrl}/skills/${slug}`;
+---
+<a class="skill-card" href={href} data-category={category}>
+  <div class="skill-card-head">
+    <span class="skill-cat mono">{categoryName}</span>
+  </div>
+  <div class="skill-title h-display">{title}</div>
+  <div class="skill-summary">{summary}</div>
+  {author && (
+    <div class="skill-author mono">{author}</div>
+  )}
+</a>
+
+<style>
+  .skill-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 22px 22px 20px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--bg);
+    color: var(--ink);
+    text-decoration: none;
+    transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    height: 100%;
+  }
+  .skill-card:hover {
+    border-color: var(--ink-3);
+    box-shadow: 0 6px 20px -10px rgba(0, 0, 0, 0.18);
+    transform: translateY(-1px);
+  }
+  .skill-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .skill-cat {
+    font-size: 10.5px;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .skill-title {
+    font-size: 19px;
+    font-weight: 500;
+    line-height: 1.25;
+    color: var(--ink);
+  }
+  .skill-summary {
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--ink-2);
+    flex: 1;
+  }
+  .skill-author {
+    font-size: 11px;
+    color: var(--ink-4);
+    margin-top: 4px;
+  }
+</style>

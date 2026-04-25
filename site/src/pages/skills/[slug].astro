@@ -1,0 +1,540 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import skillsData from '../../data/skills.json';
+import categoriesData from '../../data/categories.json';
+
+type Skill = {
+  slug: string;
+  category: string;
+  title: string;
+  description: string;
+  summaryLine: string;
+  triggers: {
+    mandatory: string[];
+    strong: string[];
+    doNot?: string;
+    doWhen?: string;
+  };
+  bodyHtml: string;
+  bodyMarkdown: string;
+  sections: Record<string, string | null>;
+  footer: {
+    author?: string;
+    authorHandle?: string;
+    created?: string;
+    testedOn?: string;
+    realTasksTested?: string;
+  };
+  githubPath: string;
+  hasReferences: boolean;
+};
+
+type Category = { slug: string; title: string; description: string; skillCount: number };
+
+const skills = skillsData as Skill[];
+const categories = categoriesData as Category[];
+
+export function getStaticPaths() {
+  return (skillsData as Skill[]).map((s) => ({ params: { slug: s.slug } }));
+}
+
+const { slug } = Astro.params;
+const skill = skills.find((s) => s.slug === slug);
+
+if (!skill) {
+  // Astro guarantees getStaticPaths produced this route, but TS narrowing wants the guard.
+  throw new Error(`Skill not found: ${slug}`);
+}
+
+const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
+const repoUrl = 'https://github.com/refaelach/gmba-class-19-skills';
+const category = categories.find((c) => c.slug === skill.category);
+const categoryName = category?.title || skill.category;
+
+const githubFileUrl = `${repoUrl}/blob/main/${skill.githubPath}`;
+const githubRawUrl = `${repoUrl}/raw/main/${skill.githubPath}`;
+const githubFolderUrl = `${repoUrl}/tree/main/${skill.githubPath.replace(/\/SKILL\.md$/, '')}`;
+
+// Section render order
+const sectionOrder: { key: string; label: string }[] = [
+  { key: 'compatibility', label: 'Compatibility' },
+  { key: 'whenToUse', label: 'When to use this skill' },
+  { key: 'whenNotToUse', label: 'When NOT to use this skill' },
+  { key: 'howItWorks', label: 'How it works' },
+  { key: 'example', label: 'Example' },
+  { key: 'inputs', label: 'Inputs' },
+  { key: 'outputs', label: 'Outputs' },
+  { key: 'notesForContributors', label: 'Notes for contributors' },
+];
+---
+<Layout title={`${skill.title} · GMBA Class 19`} description={skill.summaryLine}>
+  <article class="skill-page">
+    <div class="back-link-wrap">
+      <a class="back-link" href={baseUrl + '/'}>
+        <span aria-hidden="true">←</span> Back to all skills
+      </a>
+    </div>
+
+    <header class="skill-head">
+      <div class="skill-meta-top mono">
+        <span class="skill-cat-tag">{categoryName}</span>
+        <span class="skill-slug">{skill.slug}</span>
+      </div>
+      <h1 class="skill-title h-display">{skill.title}</h1>
+      <p class="skill-sub">{skill.summaryLine}</p>
+      <div class="skill-byline mono">
+        {skill.footer?.authorHandle && <span>{skill.footer.authorHandle}</span>}
+        {skill.footer?.testedOn && <span class="dot">·</span>}
+        {skill.footer?.testedOn && <span>Tested on {skill.footer.testedOn}</span>}
+        {skill.footer?.created && <span class="dot">·</span>}
+        {skill.footer?.created && <span>{skill.footer.created}</span>}
+      </div>
+    </header>
+
+    <div class="use-panel">
+      <div class="use-panel-title mono">Use this skill</div>
+      <div class="use-actions">
+        <button id="copy-skill-btn" class="btn btn-accent btn-large" data-skill-slug={skill.slug}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+          <span class="btn-label">Copy skill</span>
+        </button>
+        <button id="download-md-btn" class="btn btn-large" data-skill-slug={skill.slug}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Download as .md
+        </button>
+      </div>
+      <div class="paste-hint">
+        Then paste into:
+        <a href="https://chatgpt.com" target="_blank" rel="noopener">ChatGPT</a>
+        <span class="dot">·</span>
+        <a href="https://claude.ai" target="_blank" rel="noopener">Claude</a>
+        <span class="dot">·</span>
+        <a href="https://gemini.google.com" target="_blank" rel="noopener">Gemini</a>
+        <span class="dot">·</span>
+        <a href="https://www.perplexity.ai" target="_blank" rel="noopener">Perplexity</a>
+      </div>
+
+      <details class="power-section">
+        <summary class="power-summary mono">Power users · Native skill format</summary>
+        <div class="power-body">
+          <p>
+            Using Claude Code, Codex, Cursor, Gemini CLI, or another tool that loads
+            <a href={`${repoUrl}/blob/main/CONTRIBUTING.md`} target="_blank" rel="noopener">Agent Skills</a> natively?
+            Drop the folder in your tool's skills directory:
+          </p>
+          <ul class="power-paths">
+            <li><span class="mono">~/.claude/skills/</span> — Claude / Claude Code</li>
+            <li><span class="mono">~/.codex/skills/</span> — OpenAI Codex</li>
+            <li><span class="mono">.cursor/skills/</span> — Cursor (project-level)</li>
+            <li><span class="mono">~/.gemini/skills/</span> — Gemini CLI</li>
+            <li><span class="mono">.agents/skills/</span> — generic project-level convention</li>
+          </ul>
+          <p class="power-actions">
+            <a class="btn btn-sm" href={githubFolderUrl} target="_blank" rel="noopener">View skill folder on GitHub</a>
+            <a class="btn btn-sm" href={githubRawUrl} target="_blank" rel="noopener">View raw SKILL.md</a>
+          </p>
+        </div>
+      </details>
+    </div>
+
+    <div class="skill-body">
+      {sectionOrder.map(({ key, label }) =>
+        skill.sections[key] ? (
+          <section class="skill-section">
+            <h2 class="skill-section-title h-display">{label}</h2>
+            <div class="md-content" set:html={skill.sections[key] || ''} />
+          </section>
+        ) : null
+      )}
+
+      {(skill.triggers.mandatory.length > 0 || skill.triggers.strong.length > 0) && (
+        <section class="skill-section trigger-section">
+          <h2 class="skill-section-title h-display">Trigger phrases</h2>
+          <p class="trigger-blurb">
+            What to say to your AI to fire this skill. Mandatory triggers always
+            invoke it; strong triggers fire it when the topic context fits.
+          </p>
+          {skill.triggers.mandatory.length > 0 && (
+            <div class="trigger-block">
+              <div class="trigger-label mono">MANDATORY</div>
+              <div class="trigger-list">
+                {skill.triggers.mandatory.map((t) => (
+                  <code class="trigger-chip">{t}</code>
+                ))}
+              </div>
+            </div>
+          )}
+          {skill.triggers.strong.length > 0 && (
+            <div class="trigger-block">
+              <div class="trigger-label mono">STRONG</div>
+              <div class="trigger-list">
+                {skill.triggers.strong.map((t) => (
+                  <code class="trigger-chip">{t}</code>
+                ))}
+              </div>
+            </div>
+          )}
+          {skill.triggers.doNot && (
+            <div class="trigger-block">
+              <div class="trigger-label mono">DO NOT TRIGGER ON</div>
+              <p class="trigger-prose">{skill.triggers.doNot}</p>
+            </div>
+          )}
+        </section>
+      )}
+
+      {skill.footer?.realTasksTested && (
+        <section class="skill-section testing-section">
+          <h2 class="skill-section-title h-display">Tested on</h2>
+          <p>{skill.footer.realTasksTested}</p>
+        </section>
+      )}
+
+      <section class="source-section">
+        <div class="source-label mono">SOURCE</div>
+        <div class="source-links">
+          <a href={githubFileUrl} target="_blank" rel="noopener">View on GitHub</a>
+          <span class="dot">·</span>
+          <a href={`${repoUrl}/edit/main/${skill.githubPath}`} target="_blank" rel="noopener">Edit this skill</a>
+          <span class="dot">·</span>
+          <a href={`${repoUrl}/issues/new?title=${encodeURIComponent(`[${skill.slug}] `)}`} target="_blank" rel="noopener">Open an issue</a>
+        </div>
+      </section>
+    </div>
+  </article>
+</Layout>
+
+<script define:vars={{ skillMarkdown: skill.bodyMarkdown, frontmatter: { name: skill.slug, description: skill.description }, fileSlug: skill.slug }}>
+  // Build the full SKILL.md (frontmatter + body) for copy / download.
+  function buildSkillMd() {
+    const fm = `---\nname: ${frontmatter.name}\ndescription: "${(frontmatter.description || '').replace(/"/g, '\\"').replace(/\n/g, ' ')}"\n---\n\n`;
+    return fm + (skillMarkdown || '');
+  }
+
+  const copyBtn = document.getElementById('copy-skill-btn');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', async () => {
+      const md = buildSkillMd();
+      try {
+        await navigator.clipboard.writeText(md);
+        const label = copyBtn.querySelector('.btn-label');
+        const original = label ? label.textContent : 'Copy skill';
+        if (label) label.textContent = 'Copied ✓';
+        setTimeout(() => { if (label) label.textContent = original; }, 2200);
+      } catch (e) {
+        alert('Could not copy automatically. Open DevTools console for details.');
+        console.error(e);
+      }
+    });
+  }
+
+  const dlBtn = document.getElementById('download-md-btn');
+  if (dlBtn) {
+    dlBtn.addEventListener('click', () => {
+      const md = buildSkillMd();
+      const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${fileSlug}.md`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 0);
+    });
+  }
+</script>
+
+<style>
+  .skill-page {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 32px 32px 0;
+  }
+
+  .back-link-wrap { padding-top: 20px; }
+  .back-link {
+    color: var(--ink-3);
+    font-size: 13px;
+    text-decoration: none;
+  }
+  .back-link:hover { color: var(--ink); }
+
+  .skill-head { padding: 28px 0 20px; border-bottom: 1px solid var(--line); }
+  .skill-meta-top {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    font-size: 11px;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 14px;
+  }
+  .skill-cat-tag {
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .skill-title {
+    font-size: clamp(30px, 4vw, 42px);
+    line-height: 1.08;
+    margin: 0;
+    font-weight: 500;
+  }
+  .skill-sub {
+    margin: 16px 0 0;
+    font-size: 18px;
+    line-height: 1.55;
+    color: var(--ink-2);
+  }
+  .skill-byline {
+    margin-top: 18px;
+    font-size: 12px;
+    color: var(--ink-3);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+  .skill-byline .dot { color: var(--ink-4); }
+
+  .use-panel {
+    margin: 36px 0 0;
+    padding: 26px 28px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--bg-elev);
+  }
+  .use-panel-title {
+    font-size: 11px;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 16px;
+  }
+  .use-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .btn-large {
+    height: 44px;
+    padding: 0 20px;
+    font-size: 14.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .paste-hint {
+    margin-top: 18px;
+    font-size: 13px;
+    color: var(--ink-2);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+  .paste-hint a {
+    color: var(--ink);
+    text-decoration: none;
+    border-bottom: 1px solid var(--line);
+  }
+  .paste-hint a:hover { border-color: var(--accent); }
+  .paste-hint .dot { color: var(--ink-4); }
+
+  .power-section {
+    margin-top: 18px;
+    border-top: 1px solid var(--line);
+    padding-top: 16px;
+  }
+  .power-summary {
+    cursor: pointer;
+    font-size: 11px;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    user-select: none;
+  }
+  .power-summary:hover { color: var(--ink); }
+  .power-body {
+    margin-top: 14px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--ink-2);
+  }
+  .power-body p { margin: 0 0 12px; }
+  .power-body ul.power-paths {
+    list-style: none;
+    padding: 0;
+    margin: 8px 0 16px;
+  }
+  .power-body ul.power-paths li {
+    padding: 4px 0;
+    font-size: 13px;
+  }
+  .power-body ul.power-paths .mono {
+    background: var(--code-bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+  .power-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 0;
+  }
+
+  .skill-body {
+    padding-top: 12px;
+  }
+  .skill-section {
+    padding: 36px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .skill-section:last-child { border-bottom: none; }
+  .skill-section-title {
+    font-size: 22px;
+    font-weight: 500;
+    margin: 0 0 14px;
+  }
+
+  .md-content :global(p) {
+    font-size: 16px;
+    line-height: 1.65;
+    color: var(--ink-2);
+    margin: 0 0 14px;
+  }
+  .md-content :global(ul),
+  .md-content :global(ol) {
+    margin: 0 0 14px;
+    padding-left: 22px;
+  }
+  .md-content :global(li) {
+    font-size: 15.5px;
+    line-height: 1.65;
+    color: var(--ink-2);
+    margin-bottom: 6px;
+  }
+  .md-content :global(strong) { color: var(--ink); }
+  .md-content :global(code) {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    background: var(--code-bg);
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+  .md-content :global(pre) {
+    background: var(--code-bg);
+    padding: 16px;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.55;
+    margin: 0 0 14px;
+  }
+  .md-content :global(blockquote) {
+    border-left: 3px solid var(--accent);
+    padding-left: 14px;
+    margin: 0 0 14px;
+    color: var(--ink-2);
+    font-style: italic;
+  }
+  .md-content :global(table) {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 0 14px;
+    font-size: 14px;
+  }
+  .md-content :global(th),
+  .md-content :global(td) {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--line);
+  }
+  .md-content :global(th) {
+    font-weight: 500;
+    color: var(--ink);
+  }
+  .md-content :global(h3) {
+    font-size: 16px;
+    font-weight: 500;
+    margin: 18px 0 10px;
+    color: var(--ink);
+  }
+
+  .trigger-section .trigger-blurb {
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--ink-2);
+    margin: 0 0 18px;
+  }
+  .trigger-block { margin-bottom: 16px; }
+  .trigger-block:last-child { margin-bottom: 0; }
+  .trigger-label {
+    font-size: 10.5px;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+  }
+  .trigger-list {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .trigger-chip {
+    background: var(--code-bg);
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    color: var(--ink);
+  }
+  .trigger-prose {
+    font-size: 14px;
+    color: var(--ink-2);
+    line-height: 1.55;
+    margin: 0;
+  }
+
+  .source-section {
+    padding: 20px 0;
+    margin-top: 16px;
+  }
+  .source-label {
+    font-size: 11px;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+  }
+  .source-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    font-size: 13px;
+    color: var(--ink-2);
+  }
+  .source-links a {
+    color: var(--ink-2);
+    text-decoration: none;
+    border-bottom: 1px solid var(--line);
+  }
+  .source-links a:hover { border-color: var(--accent); color: var(--ink); }
+  .source-links .dot { color: var(--ink-4); }
+
+  @media (max-width: 720px) {
+    .skill-page { padding: 0 20px; }
+    .use-panel { padding: 22px 20px; }
+    .use-actions .btn-large { flex: 1; justify-content: center; }
+  }
+</style>
